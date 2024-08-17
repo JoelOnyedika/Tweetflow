@@ -16,7 +16,7 @@ import * as z from "zod";
 
 const videoData = {
   youtube: [
-    { id: 1, title: "YouTube Video 1", url: "https://example.com/video1.mp4", date: "2023-08-01", platforms: ["youtube"] },
+    { id: 1, title: "YouTube Video 1", url: "https://example.com/videoy1.mp4", date: "2023-08-01", platforms: ["youtube"] },
     { id: 2, title: "YouTube Video 2", url: "https://example.com/video2.mp4", date: "2023-08-02", platforms: ["youtube", "tiktok"] },
   ],
   tiktok: [
