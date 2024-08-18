@@ -14,7 +14,7 @@ const Sidebar = () => {
       {sidebarLinks.map((link, index) => (
         <Link
           key={index}
-          to={link.href}
+          to={`/77${link.href}`}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           onClick={() => setIsOpen(false)}
         >

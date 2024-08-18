@@ -9,6 +9,7 @@ import Integrations from "@/components/integrations/Integrations";
 import AutoPilot from "@/components/autopilot/AutoPilot";
 import VideoLibrary from "@/components/videolibrary/VideoLibrary";
 import Settings from "@/components/settings/Settings";
+import TemplateCreator from "@/components/templates/ui/TemplateCreator";
 import "./index.css";
 
 function App() {
@@ -16,14 +17,15 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/createvideo" element={<CreateVideo />} />
-        <Route path="/createvoice" element={<CreateVoice />} />
-        <Route path="/scheduledvideo" element={<ScheduledVideo />} />
-        <Route path="/videolibrary" element={<VideoLibrary />} />
-        <Route path="/templates" element={<Templates />} />
-        <Route path="/integrations" element={<Integrations />} />
-        <Route path="/autopilot" element={<AutoPilot />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/:id/createvideo" element={<CreateVideo />} />
+        <Route path="/:id/createvoice" element={<CreateVoice />} />
+        <Route path="/:id/scheduledvideo" element={<ScheduledVideo />} />
+        <Route path="/:id/videolibrary" element={<VideoLibrary />} />
+        <Route path="/:id/templates" element={<Templates />} />
+        <Route path="/:id/integrations" element={<Integrations />} />
+        <Route path="/:id/autopilot" element={<AutoPilot />} />
+        <Route path="/:id/settings" element={<Settings />} />
+        <Route path="/templatecreator" element={<TemplateCreator />} />
       </Routes>
     </Router>
   );

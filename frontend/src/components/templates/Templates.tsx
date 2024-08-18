@@ -64,9 +64,12 @@ export default function Templates() {
         <main className="flex-1 overflow-auto p-4 sm:p-6">
           <div className="inline-flex justify-between items-center w-full">
             <h1 className="text-3xl font-bold mb-6">Templates</h1>
-            <Button>
-              <Plus /> <span className="hidden md:flex">Create Template </span>
-            </Button>
+            <Link to="/templatecreator">
+              <Button>
+                <Plus />{" "}
+                <span className="hidden md:flex">Create Template </span>
+              </Button>
+            </Link>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
