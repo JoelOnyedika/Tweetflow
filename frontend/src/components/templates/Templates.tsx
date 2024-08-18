@@ -14,12 +14,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DashNavbar from "@/components/hero/DashNavbar";
 import Sidebar from "@/components/hero/Sidebar";
 import { VideoIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Plus } from 'lucide-react';
+import { Plus } from "lucide-react";
 
 const formSchema = z.object({
   voiceName: z.string().min(2, {
@@ -64,12 +65,19 @@ export default function Templates() {
           <div className="inline-flex justify-between items-center w-full">
             <h1 className="text-3xl font-bold mb-6">Templates</h1>
             <Button>
-         <Plus/>  <span className="hidden md:flex">Create Template </span>
+              <Plus /> <span className="hidden md:flex">Create Template </span>
             </Button>
           </div>
-          
-          <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
-            hh
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <Card className="w-full max-w-sm mx-auto">
+              <CardHeader className="flex flex-row items-center justify-center space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-center">
+                  Card title
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="aspect-[9/16] bg-slate-200 rounded-md overflow-hidden"></CardContent>
+            </Card>
           </div>
         </main>
       </div>

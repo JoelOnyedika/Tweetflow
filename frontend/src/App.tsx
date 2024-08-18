@@ -5,6 +5,10 @@ import CreateVideo from "@/components/createvideo/CreateVideo";
 import CreateVoice from "@/components/createvoice/CreateVoice";
 import ScheduledVideo from "@/components/scheduledvideo/ScheduledVideo";
 import Templates from "@/components/templates/Templates";
+import Integrations from "@/components/integrations/Integrations";
+import AutoPilot from "@/components/autopilot/AutoPilot";
+import VideoLibrary from "@/components/videolibrary/VideoLibrary";
+import Settings from "@/components/settings/Settings";
 import "./index.css";
 
 function App() {
@@ -15,7 +19,11 @@ function App() {
         <Route path="/createvideo" element={<CreateVideo />} />
         <Route path="/createvoice" element={<CreateVoice />} />
         <Route path="/scheduledvideo" element={<ScheduledVideo />} />
+        <Route path="/videolibrary" element={<VideoLibrary />} />
         <Route path="/templates" element={<Templates />} />
+        <Route path="/integrations" element={<Integrations />} />
+        <Route path="/autopilot" element={<AutoPilot />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Router>
   );

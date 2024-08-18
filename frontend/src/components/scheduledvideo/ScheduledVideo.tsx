@@ -77,6 +77,8 @@ const EditVideoDialog = ({ video, isOpen, onClose, onSave, onDelete }) => {
     onClose();
   };
 
+  const [selectedTime, setSelectedTime] = useState("12:00");
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -111,6 +113,31 @@ const EditVideoDialog = ({ video, isOpen, onClose, onSave, onDelete }) => {
                 </FormItem>
               )}
             />
+
+
+
+<FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Scheduled Time</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="time"
+                      value={selectedTime}
+                      onChange={(e) => setSelectedTime(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
+
+            
+            
             <FormField
               control={form.control}
               name="platforms"
