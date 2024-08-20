@@ -1,5 +1,5 @@
 entrypoint = "index.js"
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "python-3.10"]
 hidden = [".config", "package-lock.json"]
 
 [gitHubImport]
@@ -19,4 +19,9 @@ ignorePorts = false
 [[ports]]
 localPort = 5173
 externalPort = 80
+exposeLocalhost = true
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
 exposeLocalhost = true

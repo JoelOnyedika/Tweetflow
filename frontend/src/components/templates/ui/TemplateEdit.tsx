@@ -21,6 +21,7 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      console.log(file);
       const reader = new FileReader();
       reader.onload = (e) => handleSettingChange("image", e.target.result);
       reader.readAsDataURL(file);
