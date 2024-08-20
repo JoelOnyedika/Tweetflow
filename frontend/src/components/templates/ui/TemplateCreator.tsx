@@ -19,7 +19,9 @@ export default function TemplateCreator() {
     marginTop: 20,
     marginLeft: 20,
     marginRight: 20,
-    textAnim: "Typewriter",
+    textAnim: "None",
+    templateName: "My Template",
+    backgroundColor: "#708090",
   });
 
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });

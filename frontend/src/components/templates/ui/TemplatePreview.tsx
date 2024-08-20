@@ -76,7 +76,7 @@ export default function TemplatePreview({ templateSettings }) {
       } else if (templateSettings.image && img) {
         drawContent(img);
       } else {
-        ctx.fillStyle = '#000000'; // Default black background
+        ctx.fillStyle = templateSettings.backgroundColor; // Default black background
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
       drawText();

@@ -16,6 +16,8 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
     marginLeft: templateSettings.marginLeft,
     marginRight: templateSettings.marginRight,
     textAnim: templateSettings.textAnim,
+    templateName: templateSettings.templateName,
+    backgroundColor: templateSettings.backgroundColor,
   });
 
   const handleImageUpload = (e) => {
@@ -97,6 +99,14 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
 </div>
           
           <div>
+            <Label htmlFor="text">Template name</Label>
+            <Input
+              id="text"
+              value={templateSettings.templateName}
+              onChange={(e) => handleSettingChange("templateName", e.target.value)}
+            />
+          </div>
+          <div>
             <Label htmlFor="text">Sample Text</Label>
             <Input
               id="text"
@@ -130,6 +140,7 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
                 <SelectValue>{templateSettings.textAnim}</SelectValue>
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="None">None</SelectItem>
                 <SelectItem value="Typewriter">Typewriter Effect</SelectItem>
                 <SelectItem value="Flow">Flow Effect</SelectItem>
                 <SelectItem value="Falling">Falling Effect</SelectItem>
@@ -145,10 +156,10 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
             />
           </div>
           <div>
-            <Label>Text Color (Unread)</Label>
+            <Label>Background Color</Label>
             <ColorPicker
-              color={templateSettings.textColorUnread}
-              onChange={(color) => handleSettingChange("textColorUnread", color)}
+              color={templateSettings.backgroundColor}
+              onChange={(color: any) => handleSettingChange("backgroundColor", color)}
             />
           </div>
           <div>
