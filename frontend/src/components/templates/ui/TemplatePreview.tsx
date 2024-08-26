@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { TIKTOK_WIDTH, TIKTOK_HEIGHT } from "./TemplateCreator";
 
-export default function TemplatePreview({ templateSettings }) {
+const TemplatePreview = ({ templateSettings }) => {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const videoRef = useRef(null);
@@ -59,9 +60,15 @@ export default function TemplatePreview({ templateSettings }) {
       ctx.lineWidth = 2;
       const lines = templateSettings.text.split('\n');
       const lineHeight = templateSettings.fontSize * templateSettings.lineHeight;
+
+      const scaleFactor = canvas.width / TIKTOK_WIDTH;
+      const scaledMarginLeft = templateSettings.marginLeft * scaleFactor;
+      const scaledMarginTop = templateSettings.marginTop * scaleFactor;
+      const scaledFontSize = templateSettings.fontSize * scaleFactor;
+
       lines.forEach((line, index) => {
-        const x = Number(templateSettings.marginLeft);
-        const y = Number(templateSettings.marginTop) + (index * lineHeight);
+        const x = scaledMarginLeft;
+        const y = scaledMarginTop + (index * lineHeight * scaleFactor);
         ctx.strokeText(line, x, y);
         ctx.fillText(line, x, y);
       });
@@ -76,7 +83,7 @@ export default function TemplatePreview({ templateSettings }) {
       } else if (templateSettings.image && img) {
         drawContent(img);
       } else {
-        ctx.fillStyle = templateSettings.backgroundColor; // Default black background
+        ctx.fillStyle = templateSettings.backgroundColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
       drawText();
@@ -104,15 +111,17 @@ export default function TemplatePreview({ templateSettings }) {
   }, [templateSettings, canvasSize]);
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardContent className="p-6" ref={containerRef}>
-        <h2 className="text-xl font-semibold mb-4">Preview</h2>
-        <canvas
-          ref={canvasRef}
-          width={canvasSize.width}
-          height={canvasSize.height}
-          className="border border-gray-300"
-        />
+        <h2 className="text-2xl font-semibold mb-4">Preview</h2>
+        <div className="relative w-full" style={{ paddingBottom: '177.78%' }}> {/* 16:9 aspect ratio */}
+          <canvas
+            ref={canvasRef}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            className="absolute top-0 left-0 w-full h-full border border-gray-300"
+          />
+        </div>
         {templateSettings.video && (
           <video
             ref={videoRef}
@@ -126,4 +135,6 @@ export default function TemplatePreview({ templateSettings }) {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default TemplatePreview;

@@ -4,26 +4,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import ColorPicker from "@/components/ui/color-picker";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TIKTOK_HEIGHT } from "./TemplateCreator";
 
-export default function TemplateEdit({ templateSettings, handleSettingChange, saveTemplate }) {
+const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate }) => {
   const [editableValues, setEditableValues] = useState({
     fontSize: templateSettings.fontSize,
     lineHeight: templateSettings.lineHeight,
     marginTop: templateSettings.marginTop,
     marginLeft: templateSettings.marginLeft,
     marginRight: templateSettings.marginRight,
-    textAnim: templateSettings.textAnim,
-    templateName: templateSettings.templateName,
-    backgroundColor: templateSettings.backgroundColor,
   });
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log(file);
       const reader = new FileReader();
       reader.onload = (e) => handleSettingChange("image", e.target.result);
       reader.readAsDataURL(file);
@@ -39,7 +34,7 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
     }
   };
 
-  const handleContentEditableChange = (setting, value) => {
+  const handleInputChange = (setting, value) => {
     const numValue = parseFloat(value);
     if (!isNaN(numValue)) {
       setEditableValues({ ...editableValues, [setting]: numValue });
@@ -47,63 +42,50 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
     }
   };
 
-  const renderEditableNumber = (setting, label, min, max) => (
-    <div>
-      <Label htmlFor={setting}>{label}: </Label>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span
-              id={setting}
-              contentEditable
-              suppressContentEditableWarning
-              className="inline-block min-w-[30px] border-b border-dashed border-gray-400 focus:outline-none focus:border-solid focus:border-blue-500"
-              onBlur={(e) => handleContentEditableChange(setting, e.target.textContent)}
-            >
-              {editableValues[setting]}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Editable</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <Slider
-        className="mt-2"
+  const renderInput = (setting, label, min, max, step = 1) => (
+    <div className="flex flex-col space-y-2">
+      <Label htmlFor={setting}>{label}</Label>
+      <Input
+        id={setting}
+        type="number"
         min={min}
         max={max}
-        step={setting === "lineHeight" ? 0.1 : 1}
-        value={[editableValues[setting]]}
-        onValueChange={([value]) => handleContentEditableChange(setting, value)}
+        step={step}
+        value={editableValues[setting]}
+        onChange={(e) => handleInputChange(setting, e.target.value)}
+        className="w-full"
       />
     </div>
   );
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Template Settings</h2>
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2 mt-2">
-  <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-  <label htmlFor="image-upload" className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded">
-    Upload Image
-  </label>
-</div>
+    <Card className="w-full">
+      <CardContent className="p-6 space-y-6">
+        <h2 className="text-2xl font-semibold mb-4">Template Settings</h2>
 
-<div className="flex items-center space-x-2 mt-2">
-  <Input id="video-upload" type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
-  <label htmlFor="video-upload" className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded">
-    Upload Video
-  </label>
-</div>
-          
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="text">Template name</Label>
+            <Label htmlFor="image-upload" className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded block text-center">
+              Upload Image
+            </Label>
+            <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+          </div>
+          <div>
+            <Label htmlFor="video-upload" className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded block text-center">
+              Upload Video
+            </Label>
+            <Input id="video-upload" type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="templateName">Template Name</Label>
             <Input
-              id="text"
+              id="templateName"
               value={templateSettings.templateName}
               onChange={(e) => handleSettingChange("templateName", e.target.value)}
+              className="w-full"
             />
           </div>
           <div>
@@ -112,8 +94,12 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
               id="text"
               value={templateSettings.text}
               onChange={(e) => handleSettingChange("text", e.target.value)}
+              className="w-full"
             />
           </div>
+        </div>
+
+        <div className="space-y-4">
           <div>
             <Label htmlFor="font-family">Font Family</Label>
             <Select
@@ -130,8 +116,8 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
               </SelectContent>
             </Select>
           </div>
-<div>
-            <Label htmlFor="text-anim">Text animation type</Label>
+          <div>
+            <Label htmlFor="text-anim">Text Animation Type</Label>
             <Select
               value={templateSettings.textAnim}
               onValueChange={(value) => handleSettingChange("textAnim", value)}
@@ -146,10 +132,20 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
                 <SelectItem value="Falling">Falling Effect</SelectItem>
               </SelectContent>
             </Select>
-          </div> {renderEditableNumber("fontSize", "Font Size (px)", 8, 72)}
-          {renderEditableNumber("lineHeight", "Line Height", 1, 3)}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          {renderInput("fontSize", "Font Size (px)", 8, 72)}
+          {renderInput("lineHeight", "Line Height", 1, 3, 0.1)}
+          {renderInput("marginTop", "Top Margin (px)", 0, TIKTOK_HEIGHT)}
+          {renderInput("marginLeft", "Left Margin (px)", 0, 100)}
+          {renderInput("marginRight", "Right Margin (px)", 0, 100)}
+        </div>
+
+        <div className="space-y-4">
           <div>
-            <Label>Text Color (Read)</Label>
+            <Label>Text Color</Label>
             <ColorPicker
               color={templateSettings.textColor}
               onChange={(color) => handleSettingChange("textColor", color)}
@@ -159,7 +155,7 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
             <Label>Background Color</Label>
             <ColorPicker
               color={templateSettings.backgroundColor}
-              onChange={(color: any) => handleSettingChange("backgroundColor", color)}
+              onChange={(color) => handleSettingChange("backgroundColor", color)}
             />
           </div>
           <div>
@@ -169,14 +165,12 @@ export default function TemplateEdit({ templateSettings, handleSettingChange, sa
               onChange={(color) => handleSettingChange("textOutline", color)}
             />
           </div>
-          {renderEditableNumber("marginTop", "Top Margin (px)", 0, 300)}
-          {renderEditableNumber("marginLeft", "Left Margin (px)", 0, 100)}
-          {renderEditableNumber("marginRight", "Right Margin (px)", 0, 100)}
-          <div className="flex space-x-4">
-            <Button onClick={saveTemplate}>Save Template</Button>
-          </div>
         </div>
+
+        <Button onClick={saveTemplate} className="w-full">Save Template</Button>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default TemplateEdit;

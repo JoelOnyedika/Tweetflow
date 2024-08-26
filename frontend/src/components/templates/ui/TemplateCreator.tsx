@@ -6,33 +6,36 @@ import Sidebar from "@/components/hero/Sidebar";
 import TemplateEdit from "./TemplateEdit";
 import TemplatePreview from "./TemplatePreview";
 
+// Constants for TikTok video dimensions
+export const TIKTOK_WIDTH = 1080;
+export const TIKTOK_HEIGHT = 1920;
+export const CENTER_Y = TIKTOK_HEIGHT / 2;
+
 export default function TemplateCreator() {
   const [templateSettings, setTemplateSettings] = useState({
     image: null,
+    video: null,
     text: "Your tweet text here",
     fontFamily: "Arial",
     fontSize: 30,
     lineHeight: 1.5,
-    textColor: "#ff0000",
-    textColorUnread: "#888888",
-    textOutline: "#ffffff",
-    marginTop: 20,
+    textColor: "#ffffff",
+    textOutline: "#000000",
+    marginTop: CENTER_Y,
     marginLeft: 20,
     marginRight: 20,
     textAnim: "None",
     templateName: "My Template",
-    backgroundColor: "#708090",
+    backgroundColor: "#000000",
   });
-
-  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
 
   const handleSettingChange = (setting, value) => {
     setTemplateSettings({ ...templateSettings, [setting]: value });
   };
 
   const saveTemplate = () => {
-    // Implement save functionality (e.g., to localStorage or backend)
     console.log("Saving template:", templateSettings);
+    // Implement actual save functionality here
   };
 
   return (
@@ -59,8 +62,6 @@ export default function TemplateCreator() {
             />
             <TemplatePreview
               templateSettings={templateSettings}
-              dragPosition={dragPosition}
-              setDragPosition={setDragPosition}
               className="w-full lg:w-1/2"
             />
           </div>
