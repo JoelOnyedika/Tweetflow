@@ -35,10 +35,23 @@ const SignUp = () => {
 
   const onSubmit = async (values) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log(values);
-      showToast("Account created successfully!", "info");
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        body: JSON.stringify(values),
+        }
+      }
+      const response = await fetch("http://127.0.0.1:8000/api/signup", options)
+      const data = await response.json()
+      if (response.ok) {
+        // store user cookie
+        showToast("Sign up successful. Welcome!", "success");
+      } else {
+        form.reset()
+        showToast("Sign up failed. Please try again.", "error");
+      }
+      
     } catch (error) {
       showToast("Failed to create account. Please try again.", "error");
     }
