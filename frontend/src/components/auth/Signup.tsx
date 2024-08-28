@@ -4,14 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Chrome, Twitter, Loader2 } from "lucide-react";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
-  name: z.string().min(3, {
-    message: "Name must be at least 3 characters.",
+  name: z.string().min(4, {
+    message: "Name must be at least 4 characters.",
   }),
   email: z.string().email({
     message: "Please enter a valid email address.",
@@ -30,6 +30,7 @@ export default function SignUp() {
       email: "",
       password: "",
     },
+    mode: "onChange", // This enables real-time validation
   });
 
   const onSubmit = async (values) => {
@@ -73,7 +74,9 @@ export default function SignUp() {
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
-                  <FormMessage />
+                  {form.formState.errors.name && (
+                    <p className="mt-1 text-sm text-red-500">{form.formState.errors.name.message}</p>
+                  )}
                 </FormItem>
               )}
             />
@@ -86,7 +89,9 @@ export default function SignUp() {
                   <FormControl>
                     <Input type="email" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  {form.formState.errors.email && (
+                    <p className="mt-1 text-sm text-red-500">{form.formState.errors.email.message}</p>
+                  )}
                 </FormItem>
               )}
             />
@@ -99,11 +104,17 @@ export default function SignUp() {
                   <FormControl>
                     <Input type="password" {...field} />
                   </FormControl>
-                  <FormMessage />
+                  {form.formState.errors.password && (
+                    <p className="mt-1 text-sm text-red-500">{form.formState.errors.password.message}</p>
+                  )}
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={!form.formState.isValid || form.formState.isSubmitting}
+            >
               {form.formState.isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
