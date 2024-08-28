@@ -29,7 +29,7 @@ export default function Landing() {
               TweetFlow is the ultimate solution for creating, scheduling, and posting video content across multiple
               platforms.
             </p>
-            <Button className="mt-8 px-8 py-3 rounded-full text-lg font-medium">Get Started</Button>
+            <Link to="/signup" className="mt-8 px-8 py-3 rounded-full text-lg font-medium">Get Started</Link>
           </div>
         </section>
         <section className="w-full py-12 md:py-24 lg:py-32">

@@ -63,9 +63,9 @@ class Voice(models.Model):
 
 class ScheduledVideo(models.Model):
     PLATFORM_CHOICES = [
-        ('Youtube', 'YouTube'),
-        ('Tiktok', 'TikTok'),
-        ('Instagram', 'Instagram'),
+        ('youtube', 'YouTube'),
+        ('tiktok', 'TikTok'),
+        ('instagram', 'Instagram'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)

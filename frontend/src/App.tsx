@@ -10,6 +10,7 @@ import AutoPilot from "@/components/autopilot/AutoPilot";
 import VideoLibrary from "@/components/videolibrary/VideoLibrary";
 import Settings from "@/components/settings/Settings";
 import TemplateCreator from "@/components/templates/ui/TemplateCreator";
+import Signup from "@/components/auth/Signup";
 import "./index.css";
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
         <Route path="/:id/autopilot" element={<AutoPilot />} />
         <Route path="/:id/settings" element={<Settings />} />
         <Route path="/templatecreator" element={<TemplateCreator />} />
+        <Route path="/signup" element={<Signup />} />
       </Routes>
     </Router>
   );
