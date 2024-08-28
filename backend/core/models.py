@@ -1,8 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+from django.contrib.auth.models import AbstractUser
+from datetime import timedelta
 
 # Create your models here.
+class CustomUser(AbstractUser):
+    plan = models.CharField(max_length=20, choices=[('free', 'Free'), ('starter', 'Starter'), ('enterprise', 'Enterprise')], default='free')
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+
+    def set_end_date(self, duration_days):
+        if self.start_date:
+            self.end_date = self.start_date + timedelta(days=duration_days)
+            self.save()
+
 class Template(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -58,7 +70,7 @@ class ScheduledVideo(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     video = models.ForeignKey(Video, on_delete=models.CASCADE)  # Link to the generated video
-    platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES)
+    platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES, null=True)
     scheduled_date = models.DateField()
     scheduled_time = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
