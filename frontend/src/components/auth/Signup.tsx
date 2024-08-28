@@ -58,7 +58,7 @@ export default function SignUp() {
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-foreground">Sign up for an account</h2>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             Or{" "}
-            <Link to="/signin" className="font-medium text-primary hover:text-primary-foreground">
+            <Link to="/login" className="font-medium text-primary hover:text-primary-foreground">
               sign in to your existing account
             </Link>
           </p>

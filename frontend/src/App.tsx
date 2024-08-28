@@ -11,6 +11,7 @@ import VideoLibrary from "@/components/videolibrary/VideoLibrary";
 import Settings from "@/components/settings/Settings";
 import TemplateCreator from "@/components/templates/ui/TemplateCreator";
 import Signup from "@/components/auth/Signup";
+import Login from "@/components/auth/Login";
 import "./index.css";
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
         <Route path="/:id/settings" element={<Settings />} />
         <Route path="/templatecreator" element={<TemplateCreator />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     </Router>
   );
