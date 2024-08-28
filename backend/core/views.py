@@ -54,27 +54,3 @@ def signup(request):
         return JsonResponse({'error': None, 'data': user}, status=201)
     except Exception as e:
         return JsonResponse({'error': str(e), 'data': None}, status=500)
-
-class CreateVideo(View):
-    def handle_create_video(self, request):
-        tweet_text = request.data.get('tweetText')
-    template_settings = request.data.get('templateSettings')
-    
-        
-    def post(self, request):
-        if request.method == 'POST':
-            tweet_text = request.POST.get('tweetText')
-            template = request.POST.get('template')
-            if not tweet_text or not template:
-                return JsonResponse({'error': 'Please provide all the required fields.', 'data': None}, status=400)
-            try:
-                handle_create_video()
-                template_name = Template.objects.get(id=template)
-                if not template_name:
-                    return JsonResponse({'error': 'Template not found.', 'data': None}, status=400)
-                handle_video_processing(tweet_text, template_name)
-                video = Video.objects.create(title=tweet_text[0:20], tweet_text=tweet_text, template=template, video_url=None)
-                return JsonResponse({'error': None, 'data': video}, status=201)
-            except Exception as e:
-                return JsonResponse({'error': str(e), 'data': None}, status=500)
-            
