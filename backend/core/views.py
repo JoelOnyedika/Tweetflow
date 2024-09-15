@@ -1,56 +1,81 @@
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
-from django.contrib.auth.models import User
-from .models import Template, Video, Voice, ScheduledVideo
-from django.contrib.auth.hashers import make_password
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import authenticate, login as auth_login
-from django.views import View
-import os
-from django.conf import settings
-from rest_framework.decorators import api_view
+from rest_framework import status
 from rest_framework.response import Response
-from moviepy.editor import *
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
+from .serializers import UserSerializer
+import logging
+from django.http import JsonResponse
 
+logger = logging.getLogger(__name__)
+
+@api_view(['GET'])
 def index(request):
-    return HttpResponse("Hello, World ".encode())
-
-@csrf_exempt
-def login(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        if not email or not password:
-            return JsonResponse({'error': 'Username or password is missing'}, status=400)
-        try:
-            user = User.objects.get(email=email)
-            user = authenticate(request, username = user.username, password=password)
-            if user is not None:
-                auth_login(request, user)
-                return JsonResponse({'data': user, 'error': None}),
-            
-        except Exception as e:
-            return JsonResponse({'error': str(e), 'data': None}, status=400)
-
-@csrf_exempt
-def signup(request):
     try:
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        if not username or not email or not password:
-            return JsonResponse({'error': 'Please provide all the required fields.', 'data': None}, status=400)
-        try:
-            validate_email(email)
-        except ValidationError:
-            return JsonResponse({'error': 'Invalid email format.', 'data': None}, status=400)
-        if User.objects.filter(username=username).exists():
-                return JsonResponse({'error': 'Username already exists.', 'data': None}, status=400)
-        if  User.objects.filter(email=email).exists():
-            return JsonResponse({'error': 'Email already exists.', 'data': None}, status=400)
-        user = User.objects.create_user(username=username, email=email, password=make_password(password))
-        return JsonResponse({'error': None, 'data': user}, status=201)
+        return Response("Hello, World!", status=status.HTTP_200_OK)
     except Exception as e:
-        return JsonResponse({'error': str(e), 'data': None}, status=500)
+        logger.error(f"Unexpected error in index view: {str(e)}")
+        return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class LoginView(APIView):
+    def post(self, request):
+        try:
+            print(request.data)
+            email = request.data.get('email')
+            password = request.data.get('password')
+            if not email or not password:
+                return JsonResponse({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                logger.warning(f"Login attempt with non-existent email: {email}")
+                return JsonResponse({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            user = authenticate(request, username=user.username, password=password)
+            if user is not None:
+                login(request, user)
+                response = JsonResponse({'data': UserSerializer(user).data, 'error': None}, status=status.HTTP_200_OK)
+                response.set_cookie('user_id', user.id, max_age=3600 * 24 * 7)  # Cookie for 1 week
+                response.set_cookie('username', user.username, max_age=3600 * 24 * 7)
+                return response
+            else:
+                logger.warning(f"Failed login attempt for email: {email}")
+                return JsonResponse({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Unexpected error in login view: {str(e)}")
+            return JsonResponse({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SignupView(APIView):
+    def post(self, request):
+        try:
+            serializer = UserSerializer(data=request.data)
+            if serializer.is_valid():
+                try:
+                    user = serializer.save()
+                    if user is None:
+                        logger.error("User creation failed: save() returned None")
+                        return Response({'error': 'Failed to create user'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                    # Prepare the response data
+                    response_data = UserSerializer(user).data
+
+                    # Create a JsonResponse to set cookies
+                    response = JsonResponse({'error': None, 'data': response_data}, status=status.HTTP_201_CREATED)
+
+                    response.set_cookie('user_id', user.id, max_age=3600 * 24 * 7)  # Cookie for 1 week
+                    response.set_cookie('username', user.username, max_age=3600 * 24 * 7)
+
+                    return response
+                except Exception as e:
+                    logger.error(f"Error during user creation: {str(e)}")
+                    return Response({'error': 'User creation failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.warning(f"Validation errors during signup: {serializer.errors}")
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Unexpected error in signup view: {str(e)}")
+            return Response({'error': 'An unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    

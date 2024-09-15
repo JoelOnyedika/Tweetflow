@@ -31,11 +31,22 @@ export default function Login() {
 
   const onSubmit = async (values) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log(values);
-      showToast("Login successful. Welcome back!", "info");
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/login/`,  {
+        method: 'POST',
+        headers: {'Content-Type': "application/json"},
+        body: JSON.stringify(values)
+      })
+      const data = await response.json()
+      console.log(data)
+
+      if (response.ok) {
+        console.log(data)
+        showToast("Login successful. Welcome back!", "info");
+      } else {
+        showToast(data.error, 'error')
+      }
     } catch (error) {
+      console.log(error)
       showToast("Login failed. Please check your credentials and try again.", "error");
     }
   };

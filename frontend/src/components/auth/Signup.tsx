@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, redirect } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/customs/Toast";
 
 const formSchema = z.object({
-  name: z.string().min(4, {
+  username: z.string().min(4, {
     message: "Name must be at least 4 characters.",
   }),
   email: z.string().email({
@@ -26,7 +26,7 @@ const SignUp = () => {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      username: "",
       email: "",
       password: "",
     },
@@ -35,25 +35,33 @@ const SignUp = () => {
 
   const onSubmit = async (values) => {
     try {
-      const options = {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/signup/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+        },
         body: JSON.stringify(values),
+      });
+      
+      const data = await response.json();
+      console.log(data)
+      
+      if (response.ok) {
+        showToast("Sign up successful. Welcome!", "success");
+        console.log(data.data.id)
+        window.location.href = `/${data.data.id}/createvideo`
+      } else {
+        if (data.error && typeof data.error === 'object') {
+          // Handle validation errors
+          const errorMessage = Object.values(data.error).flat().join('. ');
+          showToast(errorMessage, "error");
+        } else {
+          showToast(data.error || "Sign up failed. Please try again.", "error");
         }
       }
-      const response = await fetch("http://127.0.0.1:8000/api/signup", options)
-      const data = await response.json()
-      if (response.ok) {
-        // store user cookie
-        showToast("Sign up successful. Welcome!", "success");
-      } else {
-        form.reset()
-        showToast("Sign up failed. Please try again.", "error");
-      }
-      
     } catch (error) {
-      showToast("Failed to create account. Please try again.", "error");
+      console.error('Error during signup:', error);
+      showToast("An unexpected error occurred. Please try again later.", "error");
     }
   };
 
@@ -74,15 +82,15 @@ const SignUp = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="name"
+                name="username"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    {form.formState.errors.name && (
-                      <p className="mt-1 text-sm text-red-500">{form.formState.errors.name.message}</p>
+                    {form.formState.errors.username && (
+                      <p className="mt-1 text-sm text-red-500">{form.formState.errors.username.message}</p>
                     )}
                   </FormItem>
                 )}
