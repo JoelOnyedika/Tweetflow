@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +24,10 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Sidebar from "@/components/hero/Sidebar";
 import DashNavbar from "@/components/hero/DashNavbar";
+import { useEffect } from 'react'
+import { useParams, useNavigate } from "react-router-dom";
+import LoadingSpinner from "@/components/customs/LoadingSpinner"
+
 
 const formSchema = z.object({
   tweetContent: z.string().min(1, {
@@ -34,7 +38,33 @@ const formSchema = z.object({
   }),
 });
 
+
+
 export default function CreateVideo() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+
+  const [templatesList, setTemplatesList] = useState(null)
+  const fetchTemplatesData = async () => {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/get-templates/${id}`)
+    
+    if (response.status === 200) {
+          const {data, error} = await response.json();
+          setTemplatesList(data)
+          // Do something if the user is authenticated
+        } else if (response.status === 401) {
+          console.log('User not authenticated, redirecting to login...');
+          navigate('/login'); // Redirect to the login route if not authenticated
+        } else {
+          console.log('Error:', response.status);
+        }
+  }
+  useEffect(() => {
+    // confirmId()
+    fetchTemplatesData()
+  }, [id])
+
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,7 +91,8 @@ export default function CreateVideo() {
       </aside>
       <div className="flex flex-1 flex-col">
         <DashNavbar />
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
+        { templatesList === null ? <LoadingSpinner /> :(
+          <main className="flex-1 overflow-auto p-4 sm:p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid gap-6 md:grid-cols-[1fr_300px]">
@@ -96,9 +127,9 @@ export default function CreateVideo() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="template1">Template 1</SelectItem>
-                            <SelectItem value="template2">Template 2</SelectItem>
-                            <SelectItem value="template3">Template 3</SelectItem>
+                          {templatesList.map((data: any) => (
+                            <SelectItem value={data.template_name}>{data.template_name}</SelectItem>
+                          ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -125,6 +156,8 @@ export default function CreateVideo() {
             </form>
           </Form>
         </main>
+        )}
+        
       </div>
     </div>
   );

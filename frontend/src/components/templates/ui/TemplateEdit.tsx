@@ -16,23 +16,24 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate }) =
     marginRight: templateSettings.marginRight,
   });
 
-  const handleImageUpload = (e) => {
+  const handleMediaUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => handleSettingChange("image", e.target.result);
+      reader.onload = (e) => handleSettingChange("media", e.target.result);
       reader.readAsDataURL(file);
+      console.log(templateSettings.media)
     }
   };
 
-  const handleVideoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => handleSettingChange("video", e.target.result);
-      reader.readAsDataURL(file);
-    }
-  };
+  // const handleVideoUpload = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onload = (e) => handleSettingChange("media", e.target.result);
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
 
   const handleInputChange = (setting, value) => {
     const numValue = parseFloat(value);
@@ -68,13 +69,13 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate }) =
             <Label htmlFor="image-upload" className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded block text-center">
               Upload Image
             </Label>
-            <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleMediaUpload} />
           </div>
           <div>
             <Label htmlFor="video-upload" className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded block text-center">
               Upload Video
             </Label>
-            <Input id="video-upload" type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
+            <Input id="video-upload" type="file" accept="video/*" className="hidden" onChange={handleMediaUpload} />
           </div>
         </div>
 

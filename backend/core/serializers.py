@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from .models import CustomUser  # Import your custom user model
+from .models import CustomUser, Template  # Import your custom user model
 import logging
 from django.db import transaction
 
@@ -38,3 +38,9 @@ class UserSerializer(serializers.ModelSerializer):
         except Exception as e:
             logger.error(f"Error creating user: {str(e)}")
             raise serializers.ValidationError("Failed to create user.")
+
+
+class TemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Template
+        fields = '__all__'

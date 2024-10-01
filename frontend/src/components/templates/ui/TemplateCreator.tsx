@@ -13,8 +13,7 @@ export const CENTER_Y = TIKTOK_HEIGHT / 2;
 
 export default function TemplateCreator() {
   const [templateSettings, setTemplateSettings] = useState({
-    image: null,
-    video: null,
+    media: null,
     text: "Your tweet text here",
     fontFamily: "Arial",
     fontSize: 30,
@@ -35,7 +34,7 @@ export default function TemplateCreator() {
 
   const saveTemplate = () => {
     console.log("Saving template:", templateSettings);
-    // Implement actual save functionality here
+    
   };
 
   return (

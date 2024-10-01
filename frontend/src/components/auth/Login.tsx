@@ -29,12 +29,30 @@ export default function Login() {
     mode: "onChange",
   });
 
-  const onSubmit = async (values) => {
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+  const onSubmit = async (values: any) => {
     try {
+      console.log(values, import.meta.env.VITE_BACKEND_SERVER_URL)
       const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/login/`,  {
-        method: 'POST',
-        headers: {'Content-Type': "application/json"},
-        body: JSON.stringify(values)
+        method: "POST",
+        headers: {"Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken")},
+        body: JSON.stringify(values),
+        credentials: 'include'
       })
       const data = await response.json()
       console.log(data)
@@ -42,6 +60,8 @@ export default function Login() {
       if (response.ok) {
         console.log(data)
         showToast("Login successful. Welcome back!", "info");
+        console.log(data.data.id)
+        window.location.href = `/${data.data.id}/createvideo`
       } else {
         showToast(data.error, 'error')
       }

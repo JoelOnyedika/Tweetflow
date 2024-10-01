@@ -27,7 +27,7 @@ function App() {
         <Route path="/:id/integrations" element={<Integrations />} />
         <Route path="/:id/autopilot" element={<AutoPilot />} />
         <Route path="/:id/settings" element={<Settings />} />
-        <Route path="/templatecreator" element={<TemplateCreator />} />
+        <Route path="/:id/templates/templatecreator" element={<TemplateCreator />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
       </Routes>

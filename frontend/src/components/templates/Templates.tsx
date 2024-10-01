@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DashNavbar from "@/components/hero/DashNavbar";
 import Sidebar from "@/components/hero/Sidebar";
 import { VideoIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Plus } from "lucide-react";
 
 const formSchema = z.object({
@@ -35,6 +35,8 @@ const formSchema = z.object({
 });
 
 export default function Templates() {
+  const {id} = useParams()
+  
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,7 +66,7 @@ export default function Templates() {
         <main className="flex-1 overflow-auto p-4 sm:p-6">
           <div className="inline-flex justify-between items-center w-full">
             <h1 className="text-3xl font-bold mb-6">Templates</h1>
-            <Link to="/templatecreator">
+            <Link to={`templatecreator`}>
               <Button>
                 <Plus />{" "}
                 <span className="hidden md:flex">Create Template </span>
