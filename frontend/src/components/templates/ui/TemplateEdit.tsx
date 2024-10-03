@@ -89,15 +89,6 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate }) =
               className="w-full"
             />
           </div>
-          <div>
-            <Label htmlFor="text">Sample Text</Label>
-            <Input
-              id="text"
-              value={templateSettings.text}
-              onChange={(e) => handleSettingChange("text", e.target.value)}
-              className="w-full"
-            />
-          </div>
         </div>
 
         <div className="space-y-4">

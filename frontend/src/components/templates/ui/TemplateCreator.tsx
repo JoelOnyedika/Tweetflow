@@ -5,6 +5,7 @@ import DashNavbar from "@/components/hero/DashNavbar";
 import Sidebar from "@/components/hero/Sidebar";
 import TemplateEdit from "./TemplateEdit";
 import TemplatePreview from "./TemplatePreview";
+import { useParams } from 'react-router-dom'
 
 // Constants for TikTok video dimensions
 export const TIKTOK_WIDTH = 1080;
@@ -12,17 +13,20 @@ export const TIKTOK_HEIGHT = 1920;
 export const CENTER_Y = TIKTOK_HEIGHT / 2;
 
 export default function TemplateCreator() {
+  const {id} = useParams()
   const [templateSettings, setTemplateSettings] = useState({
     media: null,
-    text: "Your tweet text here",
+    userId: id,
+    text: "Please Modify and Change my Style",
     fontFamily: "Arial",
+    isGenerated: false,
     fontSize: 30,
-    lineHeight: 1.5,
+    lineHeight: 3,
     textColor: "#ffffff",
     textOutline: "#000000",
     marginTop: CENTER_Y,
-    marginLeft: 20,
-    marginRight: 20,
+    marginLeft: 270,
+    marginRight: 0,
     textAnim: "None",
     templateName: "My Template",
     backgroundColor: "#000000",

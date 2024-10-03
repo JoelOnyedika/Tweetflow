@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TIKTOK_WIDTH, TIKTOK_HEIGHT } from "./TemplateCreator";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/customs/Toast";
-import io from 'socket.io-client';
+import {v4 as uuidV4} from 'uuid'
 
 const TemplatePreview = ({ templateSettings }) => {
   const canvasRef = useRef(null);
@@ -16,8 +16,6 @@ const TemplatePreview = ({ templateSettings }) => {
   const { showToast, ToastContainer } = useToast();
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
-
-  const socket = io(import.meta.env.VITE_CONVERTER_SERVER_URL);
 
 
   useEffect(() => {
@@ -88,21 +86,50 @@ const TemplatePreview = ({ templateSettings }) => {
       ctx.fillStyle = templateSettings.textColor;
       ctx.strokeStyle = templateSettings.textOutline;
       ctx.lineWidth = 2;
-      const lines = templateSettings.text.split('\n');
-      const lineHeight = templateSettings.fontSize * templateSettings.lineHeight;
 
       const scaleFactor = canvas.width / TIKTOK_WIDTH;
       const scaledMarginLeft = templateSettings.marginLeft * scaleFactor;
       const scaledMarginTop = templateSettings.marginTop * scaleFactor;
       const scaledFontSize = templateSettings.fontSize * scaleFactor;
+      const maxLineWidth = canvas.width - scaledMarginLeft * 2; // Available width for text
 
-      lines.forEach((line, index) => {
+      const lineHeight = scaledFontSize * templateSettings.lineHeight;
+
+      // Function to split text into lines that fit within the border
+      function wrapText(text, maxWidth) {
+        const words = text.split(' ');
+        let line = '';
+        const lines = [];
+
+        words.forEach(word => {
+          const testLine = line + word + ' ';
+          const testWidth = ctx.measureText(testLine).width;
+
+          if (testWidth > maxWidth && line !== '') {
+            lines.push(line);
+            line = word + ' '; // Start a new line with the current word
+          } else {
+            line = testLine;
+          }
+        });
+
+        lines.push(line.trim()); // Push the last line
+        return lines;
+      }
+
+      // Split text into multiple lines, considering newlines and word wrapping
+      const inputLines = templateSettings.text.split('\n');
+      const wrappedLines = inputLines.flatMap(line => wrapText(line, maxLineWidth));
+
+      wrappedLines.forEach((line, index) => {
         const x = scaledMarginLeft;
-        const y = scaledMarginTop + (index * lineHeight * scaleFactor);
+        const y = scaledMarginTop + (index * lineHeight);
+
         ctx.strokeText(line, x, y);
         ctx.fillText(line, x, y);
       });
     }
+
 
     function drawFrame() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -173,28 +200,6 @@ const TemplatePreview = ({ templateSettings }) => {
     }
   };
 
-  async function handleGeneratePreview() {
-    const response = await fetch(`${import.meta.env.VITE_CONVERTER_SERVER_URL}/api/create-template`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(templateSettings)
-    })
-
-    setIsGenerating(true)
-    const data = await response.json()
-    socket.on('video_progress', (data) => {
-      setProgress(data.progress);
-    });
-
-    // Cleanup the socket connection
-    return () => socket.disconnect();
-    console.log(data)
-    if (data.error) {
-      console.log(data.error)
-      showToast(data.error.message, 'error')
-    }
-  }
-
   const isVideo = templateSettings.media && templateSettings.media.startsWith('data:video/');
 
   return (
@@ -222,6 +227,7 @@ const TemplatePreview = ({ templateSettings }) => {
           />
         )}
         <div className="flex space-y-3 flex-col">
+        {isVideo && (
           <Button 
             className="w-full" 
             onClick={handlePreviewClick}
@@ -229,12 +235,7 @@ const TemplatePreview = ({ templateSettings }) => {
           >
             {isLoading ? "Loading..." : isPlaying ? "Pause" : "Play"}
           </Button>
-          <Button 
-            className="w-full" 
-            onClick={handleGeneratePreview}
-          >
-            {isGenerating ? `Video Processing Progress: ${Math.round(progress)}%` : "Generate Sample Preview"}
-          </Button>
+        )}
         </div>
       </CardContent>
       <ToastContainer />
