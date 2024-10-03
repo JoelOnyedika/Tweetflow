@@ -9,12 +9,59 @@ from PIL import ImageColor, Image
 import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+import mimetypes
+from b2sdk.v2 import InMemoryAccountInfo, B2Api
+import uuid
+from dotenv import load_dotenv
+from pathlib import Path
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parent / '.env')
 
 app = Flask(__name__)
 
+
+B2_APPLICATION_KEY_ID = os.getenv('B2_APPLICATION_KEY_ID')
+B2_APPLICATION_KEY = os.getenv('B2_APPLICATION_KEY')
+B2_BUCKET_NAME = os.getenv('B2_BUCKET_NAME')
+
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limi
+
+info = InMemoryAccountInfo()
+b2_api = B2Api(info)
+
+try:
+    # Authorize account using application key ID and key
+    b2_api.authorize_account('production', B2_APPLICATION_KEY_ID, B2_APPLICATION_KEY)
+    print("Successfully authorized Backblaze B2 account!")
+    
+    # Get the bucket by name and print its details
+    bucket = b2_api.get_bucket_by_name(B2_BUCKET_NAME)
+    print(f"Bucket found: {bucket.name}")
+
+except Exception as e:
+    print("Error:", e)
+    # return jsonify({ "error": {"message": "Unable to connect to storage."} })
+
+
 CORS(app)
-socketio = SocketIO(app)
+
+def upload_media(type: str, user_id: str, template_id: str, file: any):
+    randomUUID = uuid.uuid4()
+    file_path = f'{type}s/{user_id}/{template_id}/{randomUUID}'
+
+    if type not in ['image', 'video']:
+        return jsonify({'error': {'message': 'Invalid type'}}), 400
+
+    try:
+        # Upload the file to Backblaze
+        uploaded_file = bucket.upload_bytes(file.read(), file_path)
+
+        # Get the file URL
+        file_url = b2_api.get_download_url_for_fileId(uploaded_file.id_)
+        return jsonify({"data": file_url}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'error': {'message': "Something went wrong while uploading file"}}), 500
 
 
 def resize_frame(frame, target_size):
@@ -72,11 +119,6 @@ def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
-def progress_callback(current_frame, total_frames):
-        progress = (current_frame / total_frames) * 100
-        socketio.emit('video_progress', {'progress': progress})
-
-
 @app.route('/api/create-template', methods=['POST'])
 def generate_tiktok_video():
     data = request.get_json()
@@ -100,9 +142,17 @@ def generate_tiktok_video():
 
     # Background clip: Color, Image, or Video
     try:
+        if 'text' not in data or not isinstance(data['text'], str):
+            return jsonify({"error": "Invalid text input"}), 400
+
         if data['media']:
-            if data['media'].endswith(('mp4', 'mov', 'avi')):
-                background_clip = center_video_in_tiktok_frame(data['media'], background_color=hex_to_rgb(data["backgroundColor"]))
+            file_type, _ = mimetypes.guess_type(data['media'])
+            if file_type is None:
+                return jsonify({ "error": {"message": "Unsupported file type"} })
+            if file_type.startswith('data:video/'):
+                video_url = upload_media('video', data['userId'], data['id'], data['media'])
+                print(video_url)
+                background_clip = center_video_in_tiktok_frame(video_url, background_color=hex_to_rgb(data["backgroundColor"]))
                 video_duration = min(background_clip.duration, max_duration)  # Cap the video duration at 60 seconds
 
                 # If the video is shorter than the audio, duplicate the video until it matches the audio duration
@@ -111,12 +161,16 @@ def generate_tiktok_video():
                     while sum([clip.duration for clip in loop_clips]) < text_duration:
                         loop_clips.append(background_clip)
                     background_clip = concatenate_videoclips(loop_clips).subclip(0, text_duration)
-            else:
-                img = Image.open(data['media'])
+            elif file_type.startswith('data:image/'):
+                image_url = upload_media('image', data['userId'], data['id'], data['media'])
+                print(image_url)
+                img = Image.open(image_url)
                 img.thumbnail((screen_width, screen_height), Image.LANCZOS)
                 new_img = Image.new("RGB", (screen_width, screen_height), hex_to_rgb(data["backgroundColor"]))
                 new_img.paste(img, ((screen_width - img.size[0]) // 2, (screen_height - img.size[1]) // 2))
                 background_clip = ImageClip(np.array(new_img)).set_duration(text_duration)
+            else:
+                return jsonify({ "error": {"message": "Unsupported file type"} })             
         else:
             background_color = hex_to_rgb(data["backgroundColor"])
             background_clip = ColorClip(size=(screen_width, screen_height), color=background_color).set_duration(text_duration)
@@ -157,45 +211,27 @@ def generate_tiktok_video():
 
         # Write the video to a file
         final_clip = final_clip.subclip(0, text_duration)  # Ensure the final video doesn't exceed the text duration
-        final_clip.write_videofile(output_filename, codec="libx264", fps=24, callback=progress_callback, threads=4)
+        final_clip.write_videofile(output_filename, codec="libx264", fps=24, threads=4)
 
         # Clean up the generated audio file
         os.remove("audio.mp3")
+        return jsonify({'data': {'message':'Process Completeted'}})
     except Exception as e:
         print(e)
         return jsonify({ 'error': {'message': "something went wrong"} })
-    return jsonify({'data', 'Process Completeted'})
+    
 
+@app.errorhandler(500)
+def handle_internal_error(error):
+    # Log the error for debugging purposes
+    app.logger.error(f"Internal Server Error: {error}")
 
+    # You can check for CORS-related messages or other exceptions
+    if "CORS" in str(error):  
+        return jsonify({"error": {"message": "CORS error occurred"}}), 500
 
-
-
-
-
-
-# text = "This is a sample text that will be used to generate a video with text-to-speech audio. Tweet flow is still in development but will cook. Hopefully, it will be ready soon."
-#generate_video_from_text(text)
-
-
-
-# data = {
-#     'media': './vid3.mp4',
-#     "text": text,
-#     "fontFamily": "Arial",
-#     "fontSize": 80,
-#     "lineHeight": 1.5,
-#     "textColor": "#ff0000",
-#     "textColorUnread": "#888888",
-#     'textOutline': "#ffffff",
-#     'marginTop': 900,
-#     "marginLeft": 150,
-#     "marginRight": 150,
-#     "textAnim": None,
-#     "templateName": "My Template",
-#     "backgroundColor": "#708090",
-# }
-
-# generate_tiktok_video(data)
+    # Return a generic response for all other 500 errors
+    return jsonify({"error": {"message":"Internal server error occurred"}}), 500
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    app.run(debug=True)
