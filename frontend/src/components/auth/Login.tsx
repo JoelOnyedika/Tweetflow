@@ -7,7 +7,8 @@ import { Chrome, Twitter, Loader2 } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/customs/Toast";// Import our custom useToast hook
+import { useToast } from "@/components/customs/Toast";
+import { setCookie } from '@/lib/funcs'
 
 const formSchema = z.object({
   email: z.string().email({
@@ -29,28 +30,12 @@ export default function Login() {
     mode: "onChange",
   });
 
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-        const cookies = document.cookie.split(";");
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + "=")) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
 
   const onSubmit = async (values: any) => {
     try {
-      console.log(values, import.meta.env.VITE_BACKEND_SERVER_URL)
       const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/login/`,  {
         method: "POST",
-        headers: {"Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken")},
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify(values),
         credentials: 'include'
       })
@@ -58,8 +43,12 @@ export default function Login() {
       console.log(data)
 
       if (response.ok) {
-        console.log(data)
+        const csrfToken = data.csrfToken;
+        if (csrfToken) {
+          localStorage.setItem('csrfToken', csrfToken);
+         }
         showToast("Login successful. Welcome back!", "info");
+        setCookie('user_id', data.data.id, 7)
         console.log(data.data.id)
         window.location.href = `/${data.data.id}/createvideo`
       } else {
@@ -74,6 +63,7 @@ export default function Login() {
   return (
     <>
       <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
+      <title>Login to Tweetflow</title>
         <div className="w-full max-w-md space-y-8">
           <div>
             <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-foreground">Log in to your account</h2>

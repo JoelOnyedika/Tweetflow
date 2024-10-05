@@ -9,6 +9,7 @@ class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     plan = models.CharField(max_length=20, choices=[('free', 'Free'), ('starter', 'Starter'), ('enterprise', 'Enterprise')], default='free')
     start_date = models.DateTimeField(auto_now_add=True)
+    # credits = models.IntegerField(default=30)
     end_date = models.DateTimeField(null=True, blank=True)
 
     def set_end_date(self, duration_days):

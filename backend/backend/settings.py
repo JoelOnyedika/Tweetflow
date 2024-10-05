@@ -11,7 +11,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
 
+
+# Load the .env file
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,10 +29,22 @@ SECRET_KEY = 'django-insecure-m04n0zk4kwt$i3_%njm)t3!t4dzlobv+n$79!)#aozk=1iorn=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-
-CORS_ORIGIN_ALLOW_ALL = True  # or CORS_ORIGIN_ALLOW_ALL = True
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']  # Be more specific in production
+CORS_ORIGIN_ALLOW_ALL = False  # More secure
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Add your React app's URL
+]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",  # Add your React app's URL
+]
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = True
+CSRF_USE_SESSIONS = False
 
 LOGGING = {
     'version': 1,
@@ -80,6 +96,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
 ]
+
 
 ROOT_URLCONF = 'backend.urls'
 
