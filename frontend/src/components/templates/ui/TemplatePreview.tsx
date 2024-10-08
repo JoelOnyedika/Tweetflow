@@ -19,6 +19,7 @@ const TemplatePreview = ({ templateSettings }) => {
 
 
   useEffect(() => {
+    // console.log(templateSettings)
     const videoElement = videoRef.current;
 
     const handleCanPlay = () => {

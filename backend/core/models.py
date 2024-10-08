@@ -9,7 +9,7 @@ class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     plan = models.CharField(max_length=20, choices=[('free', 'Free'), ('starter', 'Starter'), ('enterprise', 'Enterprise')], default='free')
     start_date = models.DateTimeField(auto_now_add=True)
-    # credits = models.IntegerField(default=30)
+    credits = models.IntegerField(default=30)
     end_date = models.DateTimeField(null=True, blank=True)
 
     def set_end_date(self, duration_days):
@@ -20,6 +20,7 @@ class CustomUser(AbstractUser):
 class Template(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    text = models.TextField(default="Please Modify and Change my Style")
     template_name = models.CharField(max_length=30)
     font_family = models.CharField(max_length=30, default='Arial')
     text_animation = models.CharField(max_length=30, default='None')
@@ -28,11 +29,10 @@ class Template(models.Model):
     text_color = models.CharField(max_length=8, default='#ff0000')
     background_color = models.CharField(max_length=8, default='#708090')
     text_outline_color = models.CharField(max_length=8, default='#ffffff')
-    top_margin = models.IntegerField(default=10)
-    left_margin = models.IntegerField(default=20)
-    right_margin = models.IntegerField(default=30)
-    image_url = models.URLField(null=True, blank=True)
-    video_url = models.URLField(null=True, blank=True)
+    top_margin = models.IntegerField(default=960)
+    left_margin = models.IntegerField(default=270)
+    right_margin = models.IntegerField(default=0)
+    media = models.URLField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # def __str__(self):

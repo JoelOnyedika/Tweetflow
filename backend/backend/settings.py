@@ -14,6 +14,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
+
 # Load the .env file
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -30,21 +31,28 @@ SECRET_KEY = 'django-insecure-m04n0zk4kwt$i3_%njm)t3!t4dzlobv+n$79!)#aozk=1iorn=
 DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']  # Be more specific in production
+
 CORS_ORIGIN_ALLOW_ALL = False  # More secure
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Add your React app's URL
+    "https://localhost:5173",  # Add your React app's URL
 ]
+
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",  # Add your React app's URL
+    "https://localhost:5173",  # Add your React app's URL
 ]
 CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True # Set to true to production when using https
 CSRF_USE_SESSIONS = False
+
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True  # Set to True in production when using HTTPS
+SESSION_COOKIE_NAME = 'sessionid'  # This is the default, but let's be explicit
+SESSION_COOKIE_HTTPONLY = False
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 LOGGING = {
     'version': 1,
@@ -77,11 +85,16 @@ INSTALLED_APPS = [
     'core',
     'corsheaders',
     'rest_framework',
+    'sslserver',
+    'django_extensions',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
@@ -94,8 +107,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-]
+    ]
 
 
 ROOT_URLCONF = 'backend.urls'
@@ -184,4 +196,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'core.CustomUser'
 
-LOGIN_URL = '/api/login'
+LOGIN_URL = '/login'

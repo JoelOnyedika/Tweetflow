@@ -36,6 +36,9 @@ const formSchema = z.object({
   template: z.string({
     required_error: "Please select a template.",
   }),
+  voice: z.string({
+    required_error: "Please select a voice.",
+  }),
 });
 
 
@@ -45,14 +48,18 @@ export default function CreateVideo() {
   const navigate = useNavigate()
 
   const [templatesList, setTemplatesList] = useState(null)
+  const [voiceList, setVoiceList] = useState([])
+  
   const fetchTemplatesData = async () => {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/get-templates/${id}`)
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/get-templates/${id}/`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+
+    const {data, error} = await response.json();
+    setTemplatesList(data)
     
-    if (response.status === 200) {
-          const {data, error} = await response.json();
-          setTemplatesList(data)
-          // Do something if the user is authenticated
-        } else if (response.status === 401) {
+        if (response.status === 401) {
           console.log('User not authenticated, redirecting to login...');
           navigate('/login'); // Redirect to the login route if not authenticated
         } else {
@@ -68,8 +75,7 @@ export default function CreateVideo() {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      tweetContent: "",
-      template: "",
+      tweetContent: "A codebase without test, is a codebase designed to fail",
     },
   });
 
@@ -128,6 +134,28 @@ export default function CreateVideo() {
                           </FormControl>
                           <SelectContent>
                           {templatesList.map((data: any) => (
+                            <SelectItem value={data.template_name}>{data.template_name}</SelectItem>
+                          ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="voice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Voice</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a voice" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                          {voiceList.map((data: any) => (
                             <SelectItem value={data.template_name}>{data.template_name}</SelectItem>
                           ))}
                           </SelectContent>

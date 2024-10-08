@@ -1,50 +1,39 @@
-# React + TypeScript + Vite
+## Tweetflow
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+Currently i am running both the django server in the backend and the react vite in the frontend and they are both running using https the ssl certificate.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+If you happen to land on this first you will need to create or update a folder in the root dir containing the ./frontend and ./backend folders among, in the dir you should create a certificates folder, and in it you should put your .pem cerficate files in there. 
 
-## Expanding the ESLint configuration
+- Note that the vite and django configurations are both using the certificate for flexibilty and also when creating the certificate please use `localhost` instead of `127.0.0.1`.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- Note that if you later choose to relocate the certificate files you must update their path in the `vite.config.js` file and also in the `run_ssl.py` file located in the backend where the django `manage.py` file is located and the `.env` file in the backend folder
 
-- Configure the top-level `parserOptions` property like this:
+To run vite is simple just use the `npm run dev` command
+To run django instead of the native `python manage.py runserver` run `python run_ssl.py` as the config has been changed. PS: Its the same thing i just moved the runserver cmd to the  `run_ssl.py` file so i do not have to run the long command that includes the runserver command and the path of the ssl cert
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## The enviroment variables are as follows for each folder in the root dir
+- for the frontend its 
+```env
+VITE_BACKEND_SERVER_URL 
+VITE_CONVERTER_SERVER_URL 
+
+HTTPS=true 
+SSL_CRT_FILE
+SSL_KEY_FILE
+
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+- for the backend its 
+```env
+B2_APPLICATION_KEY
+B2_APPLICATION_KEY_ID
+B2_BUCKET_NAME
+```
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+- for the converter its 
+```env
+B2_APPLICATION_KEY
+B2_APPLICATION_KEY_ID
+B2_BUCKET_NAME
 ```

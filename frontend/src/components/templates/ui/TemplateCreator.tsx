@@ -1,15 +1,15 @@
-import React, { useState,  useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { VideoIcon } from "lucide-react";
 import DashNavbar from "@/components/hero/DashNavbar";
 import Sidebar from "@/components/hero/Sidebar";
 import TemplateEdit from "./TemplateEdit";
 import TemplatePreview from "./TemplatePreview";
-import { useParams } from 'react-router-dom'
-import { v4 as uuidV4 } from 'uuid'
+import { useParams } from 'react-router-dom';
+import { v4 as uuidV4 } from 'uuid';
 import { useToast } from "@/components/customs/Toast";
-import { confirmLoggedInUser } from '@/lib/funcs'
-
+import { chopUserCredits, getCsrfToken } from '@/lib/funcs';
+import { creditSystem } from "@/lib/constants";
 
 // Constants for TikTok video dimensions
 export const TIKTOK_WIDTH = 1080;
@@ -17,14 +17,15 @@ export const TIKTOK_HEIGHT = 1920;
 export const CENTER_Y = TIKTOK_HEIGHT / 2;
 
 export default function TemplateCreator() {
-  const {id} = useParams()
+  const { id: userParamId } = useParams();
+  const { templateId } = useParams();
   const { showToast, ToastContainer } = useToast();
   const [templateSettings, setTemplateSettings] = useState({
+    id: uuidV4(),
     media: null,
-    userId: id,
+    userId: userParamId,
     text: "Please Modify and Change my Style",
     fontFamily: "Arial",
-    isGenerated: false,
     fontSize: 30,
     lineHeight: 3,
     textColor: "#ffffff",
@@ -36,12 +37,69 @@ export default function TemplateCreator() {
     templateName: "My Template",
     backgroundColor: "#000000",
   });
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [fetchedTemplateData, setFetchedTemplateData] = useState(null);
 
+  const getUserTemplatesDataById = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/get-templates-by-id/${templateId}/`, 
+        { method: 'GET', credentials: 'include' }
+      );
 
+      if (!response.ok) {
+        showToast('Whoops something went wrong while fetching your templates', 'error');
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        showToast(data.error.message, 'error');
+        return;
+      }
+
+      setFetchedTemplateData(data.data[0]);
+    } catch (error) {
+      console.log(error);
+      showToast('Whoops something went wrong while fetching your templates', 'error');
+    }
+  };
 
   useEffect(() => {
-    confirmLoggedInUser(id)
-  }, [])
+    console.log('templateId', templateId);
+
+    if (templateId) {
+      getUserTemplatesDataById();
+    }
+  }, [templateId]);
+
+  useEffect(() => {
+    if (fetchedTemplateData) {
+      console.log('fetchedTemplateData', fetchedTemplateData);
+
+      const templateData = {
+        ...templateSettings,
+        id: fetchedTemplateData.id,
+        media: fetchedTemplateData.media,
+        text: fetchedTemplateData.text,
+        fontFamily: fetchedTemplateData.font_family,
+        fontSize: fetchedTemplateData.font_size,
+        lineHeight: fetchedTemplateData.line_height,
+        textColor: fetchedTemplateData.text_color,
+        textOutline: fetchedTemplateData.text_outline_color,
+        marginTop: fetchedTemplateData.top_margin,
+        marginLeft: fetchedTemplateData.left_margin,
+        marginRight: fetchedTemplateData.right_margin,
+        textAnim: fetchedTemplateData.text_animation,
+        templateName: fetchedTemplateData.template_name,
+        backgroundColor: fetchedTemplateData.background_color
+      };
+
+      setTemplateSettings(templateData);
+      console.log('aaa', templateData);
+    }
+  }, [fetchedTemplateData]);
 
   const handleSettingChange = (setting, value) => {
     setTemplateSettings({ ...templateSettings, [setting]: value });
@@ -49,39 +107,63 @@ export default function TemplateCreator() {
 
   const saveTemplate = async () => {
     try {
-      const csrftoken = localStorage.getItem('csrfToken');
-      console.log(csrftoken)
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/upload-templates/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken,
-            },
-            body: JSON.stringify(templateSettings),
-            credentials: 'include'
-        });
+        setIsSavingTemplate(true)
+        const csrftoken = await getCsrfToken();
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // Chop user credits and check for errors
+        const { data, error } = await chopUserCredits(userParamId, creditSystem.createTemplate);
 
-        const data = await response.json();
-        console.log(data);
-        if (data.error) {
-            showToast(data.error, "error");
-        } else {
-            showToast("Template saved successfully", "success");
-            window.location.href = `/${id}/templates`
+        if (error) {
+            setIsSavingTemplate(false)
+            showToast(error.message, 'error');
+        } else if (data) {
+            try {
+                setIsSavingTemplate(true);
+                const response = await fetch(
+                    `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/upload-templates/`, 
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken,
+                        },
+                        body: JSON.stringify(templateSettings),
+                        credentials: 'include',
+                    }
+                );
+                console.log('resTemp', response )
+
+                const responseData = await response.json();
+                console.log('res', responseData)
+
+                if (responseData.error) {
+                    setIsSavingTemplate(false)
+                    showToast(responseData.error.message, 'error');
+
+                } else {
+                    setIsSavingTemplate(false)
+                    showToast("Template saved successfully", 'success');
+                    window.location.href = `/${userParamId}/templates`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                setIsSavingTemplate(false)
+                showToast("Error: Something went wrong while saving template", 'error');
+            } finally {
+                setIsSavingTemplate(false);
+            }
         }
     } catch (error) {
         console.error('Error:', error);
         showToast("Error: Something went wrong while saving template", 'error');
+        setIsSavingTemplate(false);
     }
 };
 
+
   return (
     <div className="flex min-h-screen w-full bg-background">
-    <ToastContainer />
+      <ToastContainer />
       <aside className="flex h-full w-14 flex-col border-r sm:w-60">
         <div className="flex h-14 items-center justify-center border-b px-4 sm:justify-start">
           <Link to="/" className="flex items-center gap-2 font-semibold">
@@ -100,6 +182,7 @@ export default function TemplateCreator() {
               templateSettings={templateSettings}
               handleSettingChange={handleSettingChange}
               saveTemplate={saveTemplate}
+              isSavingTemplate={isSavingTemplate}
               className="w-full lg:w-1/2"
             />
             <TemplatePreview

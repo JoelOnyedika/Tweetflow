@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ColorPicker from "@/components/ui/color-picker";
 import { TIKTOK_HEIGHT } from "./TemplateCreator";
+import { Loader2 } from 'lucide-react'
+import { creditSystem } from "@/lib/constants";
 
-const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate }) => {
+
+const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate, isSavingTemplate }) => {
   const [editableValues, setEditableValues] = useState({
     fontSize: templateSettings.fontSize,
     lineHeight: templateSettings.lineHeight,
@@ -25,15 +28,6 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate }) =
       console.log(templateSettings.media)
     }
   };
-
-  // const handleVideoUpload = (e) => {
-  //   const file = e.target.files[0];
-  //   if (file) {
-  //     const reader = new FileReader();
-  //     reader.onload = (e) => handleSettingChange("media", e.target.result);
-  //     reader.readAsDataURL(file);
-  //   }
-  // };
 
   const handleInputChange = (setting, value) => {
     const numValue = parseFloat(value);
@@ -89,7 +83,7 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate }) =
               className="w-full"
             />
           </div>
-          <div>
+          {/*<div>
             <Label htmlFor="text">Sample Text</Label>
             <Input
               id="text"
@@ -97,7 +91,7 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate }) =
               onChange={(e) => handleSettingChange("text", e.target.value)}
               className="w-full"
             />
-          </div>
+          </div>*/}
         </div>
 
         <div className="space-y-4">
@@ -168,7 +162,12 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate }) =
           </div>
         </div>
 
-        <Button onClick={saveTemplate} className="w-full">Save Template</Button>
+        <Button onClick={saveTemplate} disabled={isSavingTemplate} className="w-full font-semibold">{isSavingTemplate ? (<>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Saving template
+        </>) : <span className='font-semibold'>{`Save Template: ${creditSystem.createTemplate} Credits`}</span>
+        }
+        </Button>
       </CardContent>
     </Card>
   );

@@ -43,4 +43,14 @@ class UserSerializer(serializers.ModelSerializer):
 class TemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Template
+        fields = ['template_name', 'media', 'background_color', "id"]
+
+class TemplateByIdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Template
         fields = '__all__'
+
+class CreditsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['credits']

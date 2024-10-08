@@ -15,6 +15,9 @@ export const sidebarLinks = [
   { href: "#", icon: LogOut, label: "Logout" }
 ];
 
+export const creditSystem = {createTemplate: 5, createVideo: 10}
+
+
 export const integrations = [
   {
     name: "YouTube",

@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/customs/Toast";
+import { getCsrfToken, setCookie } from '@/lib/funcs'
 
 const formSchema = z.object({
   username: z.string().min(4, {
@@ -51,11 +52,12 @@ const SignUp = () => {
 
   const onSubmit = async (values) => {
     try {
+      const csrfToken = await getCsrfToken()
       const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/signup/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken")
+          "X-CSRFToken": csrfToken
         },
         body: JSON.stringify(values),
         credentials: 'include',
@@ -67,7 +69,7 @@ const SignUp = () => {
       if (response.ok) {
         showToast("Sign up successful. Welcome!", "success");
         console.log(data.data.id)
-        window.location.href = `/${data.data.id}/createvideo`
+        window.location.href = `/${data.data.id}/createvideo`;
       } else {
         if (data.error && typeof data.error === 'object') {
           // Handle validation errors

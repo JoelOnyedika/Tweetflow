@@ -28,6 +28,7 @@ function App() {
         <Route path="/:id/autopilot" element={<AutoPilot />} />
         <Route path="/:id/settings" element={<Settings />} />
         <Route path="/:id/templates/templatecreator" element={<TemplateCreator />} />
+        <Route path="/:id/templates/:templateId" element={<TemplateCreator />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
       </Routes>
