@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from dotenv import load_dotenv
-
+import os
 
 
 # Load the .env file
@@ -25,7 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m04n0zk4kwt$i3_%njm)t3!t4dzlobv+n$79!)#aozk=1iorn='
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+
+CONVERTER_API_KEY = os.getenv('CONVERTER_API_KEY')
+CONVERTER_SERVER_URL = os.getenv('CONVERTER_SERVER_URL')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -10,6 +10,7 @@ class CustomUser(AbstractUser):
     plan = models.CharField(max_length=20, choices=[('free', 'Free'), ('starter', 'Starter'), ('enterprise', 'Enterprise')], default='free')
     start_date = models.DateTimeField(auto_now_add=True)
     credits = models.IntegerField(default=30)
+    voices = models.JsonField(default=list, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
 
     def set_end_date(self, duration_days):

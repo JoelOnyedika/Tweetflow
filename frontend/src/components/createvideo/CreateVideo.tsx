@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,10 +24,11 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Sidebar from "@/components/hero/Sidebar";
 import DashNavbar from "@/components/hero/DashNavbar";
-import { useEffect } from 'react'
+import LoadingSpinner from "@/components/customs/LoadingSpinner";
+import { getCsrfToken } from '@/lib/funcs';
+import { useToast } from '@/components/customs/Toast';
 import { useParams, useNavigate } from "react-router-dom";
-import LoadingSpinner from "@/components/customs/LoadingSpinner"
-
+import {Volume2, Loader2} from 'lucide-react'
 
 const formSchema = z.object({
   tweetContent: z.string().min(1, {
@@ -41,51 +42,128 @@ const formSchema = z.object({
   }),
 });
 
-
-
 export default function CreateVideo() {
-  const { id } = useParams()
-  const navigate = useNavigate()
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { showToast, ToastContainer } = useToast();
 
-  const [templatesList, setTemplatesList] = useState(null)
-  const [voiceList, setVoiceList] = useState([])
-  
-  const fetchTemplatesData = async () => {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/get-templates/${id}/`, {
-      method: 'GET',
-      credentials: 'include',
-    })
-
-    const {data, error} = await response.json();
-    setTemplatesList(data)
-    
-        if (response.status === 401) {
-          console.log('User not authenticated, redirecting to login...');
-          navigate('/login'); // Redirect to the login route if not authenticated
-        } else {
-          console.log('Error:', response.status);
+  const [templatesList, setTemplatesList] = useState(null);
+  const [voiceList, setVoiceList] = useState(null);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState('')
+  const [isAudioLoading, setIsAudioLoading] = useState(false)
+  const [selectedVoice, setSelectedVoice] = useState(null);
+  const fetchVoiceModels = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/voice-models/`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
         }
-  }
+      );
+      
+      const { data, error } = await response.json();
+      if (error) {
+        showToast(error.message, 'error');
+        console.log(error)
+      } else {
+        console.log(data)
+        setVoiceList(data);
+      }
+    } catch (error) {
+      console.error('Error fetching voice models:', error);
+      showToast("Failed to load voice models. Please try again.", 'error');
+    }
+  };
+
+  const fetchTemplatesData = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/get-templates/${id}/`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        }
+      );
+
+      const { data, error } = await response.json();
+      
+      if (response.status === 401) {
+        console.log('User not authenticated, redirecting to login...');
+        navigate('/login');
+      } else if (error) {
+        showToast(error.message, 'error');
+      } else {
+        setTemplatesList(data);
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      showToast("Failed to load templates. Please refresh the page.", 'error');
+    }
+  };
+
   useEffect(() => {
-    // confirmId()
-    fetchTemplatesData()
-  }, [id])
+    fetchVoiceModels();
+    fetchTemplatesData();
+  }, [id]);
+
+  useEffect(() => {
+    if (selectedVoice) {
+      console.log("Updating audioPreviewUrl:", selectedVoice.preview_url, selectedVoice.id);
+      console.log(audioPreviewUrl)
+      setAudioPreviewUrl(selectedVoice.preview_url);
+    }
+  }, [selectedVoice, audioPreviewUrl]);
 
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      tweetContent: "A codebase without test, is a codebase designed to fail",
+      tweetContent: "A codebase without tests is a codebase designed to fail",
     },
   });
 
-  function onSubmit(values) {
-    // Handle form submission
+  function onSubmit(values:any) {
     console.log(values);
   }
 
+
+ const handleVoiceChange = (value) => {
+    console.log("Selected voice:", value);
+    const voice = voiceList.find(v => v.name === value);
+    if (voice) {
+      setSelectedVoice(voice);
+      form.setValue('voice', value);
+    }
+  };
+
+const playAudioPreview = () => {
+  if (!audioPreviewUrl) {
+    showToast("Please select a voice first", 'error');
+    return;
+  }
+
+  setIsAudioLoading(true);
+  const audio = new Audio(audioPreviewUrl);
+  
+  audio.oncanplaythrough = () => {
+    setIsAudioLoading(false);
+    audio.play();
+  };
+
+  audio.onerror = () => {
+    setIsAudioLoading(false);
+    showToast("Something went wrong while loading voice preview", 'error');
+  };
+};
+
+
   return (
     <div className="flex min-h-screen w-full bg-background">
+      <ToastContainer />
       <aside className="flex h-full w-14 flex-col border-r sm:w-60">
         <div className="flex h-14 items-center justify-center border-b px-4 sm:justify-start">
           <Link to="/" className="flex items-center gap-2 font-semibold">
@@ -97,95 +175,107 @@ export default function CreateVideo() {
       </aside>
       <div className="flex flex-1 flex-col">
         <DashNavbar />
-        { templatesList === null ? <LoadingSpinner /> :(
+        {templatesList === null || voiceList === null ? (
+          <LoadingSpinner />
+        ) : (
           <main className="flex-1 overflow-auto p-4 sm:p-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-[1fr_300px]">
-                <div className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="tweetContent"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tweet Content</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Enter your tweet content here..."
-                            className="min-h-[150px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="template"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Select Template</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-[1fr_300px]">
+                  <div className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="tweetContent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tweet Content</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a template" />
-                            </SelectTrigger>
+                            <Textarea
+                              placeholder="Enter your tweet content here..."
+                              className="min-h-[150px]"
+                              {...field}
+                            />
                           </FormControl>
-                          <SelectContent>
-                          {templatesList.map((data: any) => (
-                            <SelectItem value={data.template_name}>{data.template_name}</SelectItem>
-                          ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="voice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Select Voice</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a voice" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                          {voiceList.map((data: any) => (
-                            <SelectItem value={data.template_name}>{data.template_name}</SelectItem>
-                          ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="template"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Select Template</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a template" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {templatesList && templatesList.map((data) => (
+                                <SelectItem key={data.template_name} value={data.template_name}>
+                                  {data.template_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="">
+                      <FormField
+                      control={form.control}
+                      name="voice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Select Voice</FormLabel>
+                          <Select onValueChange={handleVoiceChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a voice" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {voiceList && voiceList.map((data) => (
+                                <SelectItem key={data.id} value={data.name} onClick={setAudioPreviewUrl(data.preview_url)}>
+                                  {data.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                          )}
+                        />
+                      </div>
+                      <Button onClick={playAudioPreview} type="button">
+                      {isAudioLoading ? <Loader2 className="animate-spin" /> : <Volume2 />}
+                      </Button>
+                    </div>
+                  <div className="space-y-6">
+                    <Card>
+                      <CardContent className="flex aspect-[9/16] items-center justify-center bg-muted p-6">
+                        <video
+                          className="w-full h-full object-cover"
+                          controls
+                          src="your-video-source.mp4"
+                          alt="Your Video"
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </CardContent>
+                    </Card>
+                    <Button type="submit" className="w-full">
+                      Create Video
+                    </Button>
+                  </div>
                 </div>
-                <div className="space-y-6">
-                  <Card>
-                    <CardContent className="flex aspect-[9/16] items-center justify-center bg-muted p-6">
-                      <video
-                        className="w-full h-full object-cover"
-                        controls
-                        src="your-video-source.mp4" // Replace this with your video source
-                        alt="Your Video"
-                      >
-                        Your browser does not support the video tag.
-                      </video>
-                    </CardContent>
-                  </Card>
-                  <Button type="submit" className="w-full">Create Video</Button>
-                </div>
-              </div>
-            </form>
-          </Form>
-        </main>
+              </form>
+            </Form>
+          </main>
         )}
-        
       </div>
     </div>
   );

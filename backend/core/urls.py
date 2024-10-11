@@ -1,5 +1,6 @@
 from django.urls import path
 from core.views.views_auth import LoginView, SignupView
+from core.views.views_voice import get_voice_models
 from core.views.views_credits import get_user_credits, chop_user_credits
 from core.views.views_template import delete_template, UploadTemplatesView, get_templates_by_id, get_templates
 from core.views.views_csrf import csrf_token_view
@@ -9,6 +10,7 @@ urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),  
     path('login/', LoginView.as_view(), name='login'),
     path('csrf/', csrf_token_view, name='csrf'),
+    path('voice-models/', get_voice_models, name='get_voice_models'),
     path('credits/<uuid:pk>/', get_user_credits, name='credits'),
     path('get-templates/<uuid:pk>/', get_templates, name='get_templates'),
     path('chop-credits/<uuid:pk>/', chop_user_credits, name='chop_user_credits'),

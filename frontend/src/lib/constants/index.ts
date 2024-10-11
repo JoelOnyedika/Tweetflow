@@ -10,6 +10,7 @@ export const sidebarLinks = [
   { href: "/videolibrary", icon: Video, label: "Video Library" },
   { href: "/templates", icon: LayoutTemplate, label: "Templates" },
   { href: "/integrations", icon: Plug, label: "Integration" },
+  { href: "/voicestore", icon: Mic, label: "Voice Store" },
   { href: "/autopilot", icon: Plane, label: "Auto Pilot" },
   { href: "/settings", icon: Settings, label: "Settings" },
   { href: "#", icon: LogOut, label: "Logout" }

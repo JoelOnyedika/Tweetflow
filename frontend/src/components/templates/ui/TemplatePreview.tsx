@@ -136,6 +136,7 @@ const TemplatePreview = ({ templateSettings }) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     
       if (templateSettings.media) {
+        // console.log('media', templateSettings.media)
         if (isVideo(templateSettings.media) && videoRef.current) {
           drawContent(videoRef.current);
         } else if (isImage(templateSettings.media) && img) {
@@ -152,11 +153,13 @@ const TemplatePreview = ({ templateSettings }) => {
     }
     
     function isImage(media) {
-      return media && media.startsWith('data:image/');
+      const extensions = ['.png', '.jpeg', '.jpg', '.webp']
+      return extensions.some(ext => media && media.endsWith(ext))
     }
     
     function isVideo(media) {
-      return media && media.startsWith('data:video/');
+      const extensions = ['.mkv', '.avi', '.mov', '.mp4']
+      return extensions.some(ext => media && media.endsWith(ext))
     }
     
     if (templateSettings.media && isImage(templateSettings.media)) {
