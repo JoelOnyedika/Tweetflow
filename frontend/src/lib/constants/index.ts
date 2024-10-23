@@ -61,3 +61,22 @@ export const UPLOAD_INTERVALS = [
   { id: 'daily', name: 'Daily' },
   { id: 'weekly', name: 'Weekly' },
 ];
+
+export const voiceModels = [
+  { id: 1, name: "Sarah", type: "Standard", price: null, inPlan: true },
+  { id: 2, name: "John", type: "Standard", price: null, inPlan: true },
+  { id: 3, name: "Emily", type: "Premium", price: 9.99, inPlan: false },
+  { id: 4, name: "Michael", type: "Premium", price: 14.99, inPlan: false },
+  { id: 5, name: "Sophia", type: "Custom", price: 29.99, inPlan: false },
+  { id: 6, name: "David", type: "Standard", price: null, inPlan: true },
+  { id: 7, name: "Olivia", type: "Premium", price: 12.99, inPlan: false },
+  { id: 8, name: "Daniel", type: "Custom", price: 34.99, inPlan: false },
+]
+
+export const planTiers = [
+  {tier: 0, plan: 'free'},
+  {tier: 1, plan: 'basic', price: 5},
+  {tier: 2, plan: 'moderate', price: 4.50},
+  {tier: 3, plan: 'standard', price: 4},
+  {tier: 4, plan: 'premuim', price: 3},
+]

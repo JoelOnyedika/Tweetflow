@@ -29,6 +29,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 CONVERTER_API_KEY = os.getenv('CONVERTER_API_KEY')
 CONVERTER_SERVER_URL = os.getenv('CONVERTER_SERVER_URL')
+ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -57,6 +58,8 @@ SESSION_COOKIE_NAME = 'sessionid'  # This is the default, but let's be explicit
 SESSION_COOKIE_HTTPONLY = False
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
+ASGI_APPLICATION = 'core.asgi.application'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -79,6 +82,8 @@ LOGGING = {
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

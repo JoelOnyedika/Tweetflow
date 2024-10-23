@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from .models import CustomUser, Template  # Import your custom user model
+from .models import CustomUser, Template, VoiceTier
 import logging
 from django.db import transaction
 
@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomUser  # Use your custom user model here
-        fields = ['id', 'username', 'email', 'password']  # Remove 'plan' from fields
+        model = CustomUser 
+        fields = ['id', 'username', 'email', 'password'] 
         extra_kwargs = {'password': {'write_only': True}}
 
     def validate_email(self, value):
@@ -43,7 +43,8 @@ class UserSerializer(serializers.ModelSerializer):
 class TemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Template
-        fields = ['template_name', 'media', 'background_color', "id"]
+        fields = '__all__'
+
 
 class TemplateByIdSerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,3 +55,8 @@ class CreditsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['credits']
+
+class VoiceTierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VoiceTier
+        fields = '__all__'

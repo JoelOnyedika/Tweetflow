@@ -8,6 +8,7 @@ import Templates from "@/components/templates/Templates";
 import Integrations from "@/components/integrations/Integrations";
 import AutoPilot from "@/components/autopilot/AutoPilot";
 import VideoLibrary from "@/components/videolibrary/VideoLibrary";
+import VoiceStore from "@/components/voicestore/VoiceStore";
 import Settings from "@/components/settings/Settings";
 import TemplateCreator from "@/components/templates/ui/TemplateCreator";
 import Signup from "@/components/auth/Signup";
@@ -25,6 +26,7 @@ function App() {
         <Route path="/:id/videolibrary" element={<VideoLibrary />} />
         <Route path="/:id/templates" element={<Templates />} />
         <Route path="/:id/integrations" element={<Integrations />} />
+        <Route path="/:id/voicestore" element={<VoiceStore />} />
         <Route path="/:id/autopilot" element={<AutoPilot />} />
         <Route path="/:id/settings" element={<Settings />} />
         <Route path="/:id/templates/templatecreator" element={<TemplateCreator />} />

@@ -19,8 +19,7 @@ def generate_audio(text, audio_filename="audio.mp3"):
 def get_models():
     try:
         headers = {
-            "Accept": "application/json",
-            "xi-api-key": api_key
+            "Content-Type": "application/json",
         }
         
         response = requests.get(url, headers=headers)

@@ -3,7 +3,7 @@ import { ClipLoader } from 'react-spinners';
 const LoadingSpinner = () => {
   return (
     <div style={styles.loaderContainer}>
-      <ClipLoader color="#E6E6FA" size={50} />
+      <ClipLoader color="#800080" size={50} />
     </div>
   );
 };

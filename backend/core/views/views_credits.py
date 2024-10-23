@@ -29,13 +29,13 @@ def get_user_credits(request, pk):
 @api_view(['POST'])
 def chop_user_credits(request, pk):
     permission_classes = (IsAuthenticated)
-    print(request.data)
+    
 
     try:
         user = request.user
         # Ensure the authenticated user is the same as the one being modified
         if user.is_authenticated and user.id == pk:
-            print(request.data)
+            
             # Get the credit amount to be deducted from the request body
             try:
                 amount_of_credits = int(request.data.get('amount'))
@@ -45,19 +45,19 @@ def chop_user_credits(request, pk):
             # Fetch the user from the database
             custom_user = CustomUser.objects.get(id=pk)
             initial_credits = custom_user.credits
-            print(custom_user)
+            
 
             # Check if the user has enough credits
             if initial_credits >= amount_of_credits:
                 # Deduct the credits and update the user record
                 custom_user.credits = initial_credits - amount_of_credits
                 custom_user.save()
-                print('fdsa')
+                
                 
                 # Return success response with updated user data
                 return JsonResponse({'data': {'credits': custom_user.credits}}, status=200)
             else:
-                print('asdf')
+                
                 return JsonResponse({'error': {'message': "You do not have enough credits."}}, status=400)
         else:
             return JsonResponse({'error': {'message': "Unauthorized request."}}, status=403)
@@ -67,5 +67,5 @@ def chop_user_credits(request, pk):
 
     except Exception as e:
         logger.error(f"Chop credits error: {str(e)}")
-        print(e)
+        
         return JsonResponse({"error": {"message": "Something went wrong."}}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

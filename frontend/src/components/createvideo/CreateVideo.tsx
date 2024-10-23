@@ -30,8 +30,9 @@ import { useToast } from '@/components/customs/Toast';
 import { useParams, useNavigate } from "react-router-dom";
 import {Volume2, Loader2} from 'lucide-react'
 
+
 const formSchema = z.object({
-  tweetContent: z.string().min(1, {
+  text: z.string().min(1, {
     message: "Tweet content is required.",
   }),
   template: z.string({
@@ -49,13 +50,18 @@ export default function CreateVideo() {
 
   const [templatesList, setTemplatesList] = useState(null);
   const [voiceList, setVoiceList] = useState(null);
+  const [videoText, setVideoText] = useState(null);
   const [audioPreviewUrl, setAudioPreviewUrl] = useState('')
   const [isAudioLoading, setIsAudioLoading] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [isLoading, setIsLoading] = useState(false)
+  const [estimatedTime, setEstimatedTime] = useState(null)
+
   const fetchVoiceModels = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/voice-models/`,
+        `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/get-voice-by-id/${id}/`,
         {
           method: "GET",
           headers: {
@@ -74,10 +80,11 @@ export default function CreateVideo() {
         setVoiceList(data);
       }
     } catch (error) {
-      console.error('Error fetching voice models:', error);
-      showToast("Failed to load voice models. Please try again.", 'error');
+      console.error('Error fetching your voice models:', error);
+      showToast("Failed to load your voice models. Please try again.", 'error');
     }
   };
+
 
   const fetchTemplatesData = async () => {
     try {
@@ -105,38 +112,105 @@ export default function CreateVideo() {
     }
   };
 
+  const videoData = {}
+
   useEffect(() => {
     fetchVoiceModels();
     fetchTemplatesData();
   }, [id]);
 
   useEffect(() => {
-    if (selectedVoice) {
-      console.log("Updating audioPreviewUrl:", selectedVoice.preview_url, selectedVoice.id);
-      console.log(audioPreviewUrl)
+    if (selectedVoice) { 
       setAudioPreviewUrl(selectedVoice.preview_url);
     }
-  }, [selectedVoice, audioPreviewUrl]);
+
+    console.log(selectedVoice, selectedTemplate, videoText)
+
+  }, [selectedVoice, audioPreviewUrl, selectedTemplate, videoText]);
 
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      tweetContent: "A codebase without tests is a codebase designed to fail",
+      text: "A codebase without tests is a codebase designed to fail",
     },
   });
 
-  function onSubmit(values:any) {
+  async function onSubmit(values:any) {
     console.log(values);
+    try {
+      setIsLoading(true)
+      openWebSocketConnection()
+
+      const csrftoken = await getCsrfToken()
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/create-video/`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,
+        },
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify(values)
+      })
+      const { data, error } = await response.json()
+      
+      if (error) {
+        setIsLoading(false)
+        console.log(error)
+        showToast(error.message, 'error')
+      }
+      console.log(data, error)
+      setIsLoading(false)  
+    }
+    catch(error) {
+      console.log(error)
+      showToast('Something went wrong. Please refresh.', 'error')
+      setIsLoading(false)
+    }
+  }
+
+  const openWebSocketConnection = () => {
+    const ws = new WebSocket(`${import.meta.env.VITE_BACKEND_WSS_SERVER_URL}/ws/estimate/`)
+
+    ws.onopen = () => {
+      console.log('WebSocket connection opened')
+    }
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+
+      if (data.estimated_time) {
+        setEstimatedTime(data.estimated_time)
+      }
+    }
+
+    ws.onclose = () => {
+      console.log('WebSocket connection closed')
+    }
+
+    ws.onerror = (error) => {
+      console.log("WebSocket error: ", error)
+    }
   }
 
 
  const handleVoiceChange = (value) => {
-    console.log("Selected voice:", value);
-    const voice = voiceList.find(v => v.name === value);
-    if (voice) {
-      setSelectedVoice(voice);
-      form.setValue('voice', value);
+    setSelectedVoice(value);
+    form.setValue('voice', value);
+  };
+
+  const handleTextChange = (e) => {
+    setVideoText(e.target.value)
+    form.setValue('text', videoText);
+  };
+
+ const handleTemplateChange = (value) => {
+    // console.log("Selected template:", value);
+    const temp = templatesList.find(v => v.id === value);
+    if (temp) {
+      setSelectedTemplate(temp.id);
+      console.log('1', selectedTemplate)
+      form.setValue('template', value);
     }
   };
 
@@ -159,7 +233,6 @@ const playAudioPreview = () => {
     showToast("Something went wrong while loading voice preview", 'error');
   };
 };
-
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -185,7 +258,7 @@ const playAudioPreview = () => {
                   <div className="space-y-6">
                     <FormField
                       control={form.control}
-                      name="tweetContent"
+                      name="text"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Tweet Content</FormLabel>
@@ -194,6 +267,8 @@ const playAudioPreview = () => {
                               placeholder="Enter your tweet content here..."
                               className="min-h-[150px]"
                               {...field}
+                              onChange={handleTextChange}
+                              value={videoText}
                             />
                           </FormControl>
                           <FormMessage />
@@ -206,7 +281,7 @@ const playAudioPreview = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Select Template</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={handleTemplateChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a template" />
@@ -214,7 +289,7 @@ const playAudioPreview = () => {
                             </FormControl>
                             <SelectContent>
                               {templatesList && templatesList.map((data) => (
-                                <SelectItem key={data.template_name} value={data.template_name}>
+                                <SelectItem key={data.template_name} value={data.id}  onClick={() => setTemplate(data.id)}>
                                   {data.template_name}
                                 </SelectItem>
                               ))}
@@ -239,7 +314,7 @@ const playAudioPreview = () => {
                             </FormControl>
                             <SelectContent>
                               {voiceList && voiceList.map((data) => (
-                                <SelectItem key={data.id} value={data.name} onClick={setAudioPreviewUrl(data.preview_url)}>
+                                <SelectItem key={data.id} value={data.voice_id} onClick={setAudioPreviewUrl(data.preview_url)}>
                                   {data.name}
                                 </SelectItem>
                               ))}
@@ -253,6 +328,11 @@ const playAudioPreview = () => {
                       <Button onClick={playAudioPreview} type="button">
                       {isAudioLoading ? <Loader2 className="animate-spin" /> : <Volume2 />}
                       </Button>
+                      <div>
+                      <a href={`/${id}/voicestore`} className="flex underline">
+                        Checkout the voice store for more voice models
+                      </a>
+                      </div>
                     </div>
                   <div className="space-y-6">
                     <Card>
@@ -267,8 +347,9 @@ const playAudioPreview = () => {
                         </video>
                       </CardContent>
                     </Card>
-                    <Button type="submit" className="w-full">
-                      Create Video
+                    <Button type="submit" disabled={videoText === null || selectedVoice === null || selectedTemplate === null || isLoading} className="w-full">
+                      {estimatedTime ? `Estimated processing time: ${estimatedTime}` : isLoading ? "Generating video. This might take a while": "Create Video"}
+                      {estimatedTime}
                     </Button>
                   </div>
                 </div>

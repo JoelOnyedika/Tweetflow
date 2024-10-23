@@ -10,7 +10,7 @@ class CustomUser(AbstractUser):
     plan = models.CharField(max_length=20, choices=[('free', 'Free'), ('starter', 'Starter'), ('enterprise', 'Enterprise')], default='free')
     start_date = models.DateTimeField(auto_now_add=True)
     credits = models.IntegerField(default=30)
-    voices = models.JsonField(default=list, blank=True)
+    voices_id = models.JSONField(default=list, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
 
     def set_end_date(self, duration_days):
@@ -62,6 +62,16 @@ class Voice(models.Model):
 
     def __str__(self):
         return self.name
+
+class VoiceTier(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
+    name = models.CharField(max_length=100)
+    plan = models.CharField(max_length=100)
+    price = models.IntegerField(default=4)
+    preview_url = models.CharField(max_length=100)
+    image_url = models.URLField(null=True)
+    voice_id = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class ScheduledVideo(models.Model):

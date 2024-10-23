@@ -57,6 +57,7 @@ class LoginView(APIView):
                 
                 response.set_cookie('user_id', str(user.id), samesite='None', secure=True, httponly=False, max_age=3600 * 24 * 7)
                 response.set_cookie('username', user.username, samesite='None', secure=True, httponly=False, max_age=3600 * 24 * 7)
+                response.set_cookie('plan', user.plan, samesite='None', secure=True, httponly=False, max_age=3600 * 24 * 7)
 
              # Set session cookie
                 # response.set_cookie(settings.SESSION_COOKIE_NAME, request.session.session_key, max_age=3600 * 24 * 7, httponly=settings.SESSION_COOKIE_HTTPONLY, samesite='Lax', secure=settings.SESSION_COOKIE_SECURE)
@@ -99,6 +100,9 @@ class SignupView(APIView):
                     template2 = Template.objects.create(user=user_instance, template_name="Template 2", media="/")
                     template3 = Template.objects.create(user=user_instance, template_name="Template 3", media="/")
 
+                    user_instance.voices_id.append('JBFqnCBsd6RMkjVDRZzb')
+                    user_instance.save()
+
                     # Authenticate and log the user in after signup to create a session
                     user = authenticate(username=user.username, password=request.data['password'])
                     if user is not None:
@@ -116,6 +120,7 @@ class SignupView(APIView):
                         # Set custom cookies (e.g., user_id and username)
                         response.set_cookie('user_id', str(user.id), samesite='None', secure=True, httponly=False, max_age=3600 * 24 * 7)
                         response.set_cookie('username', user.username, samesite='None', secure=True, httponly=False, max_age=3600 * 24 * 7)
+                        response.set_cookie('plan', user.plan, samesite='None', secure=True, httponly=False, max_age=3600 * 24 * 7)
 
                         return response
                     else:
