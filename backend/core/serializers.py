@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from .models import CustomUser, Template, VoiceTier
+from core.models import CustomUser, Template, VoiceTier, Video, ScheduledVideo
 import logging
 from django.db import transaction
 
@@ -59,4 +59,14 @@ class CreditsSerializer(serializers.ModelSerializer):
 class VoiceTierSerializer(serializers.ModelSerializer):
     class Meta:
         model = VoiceTier
+        fields = '__all__'
+
+class VideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Video
+        fields = '__all__'
+
+class ScheduledVideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScheduledVideo
         fields = '__all__'

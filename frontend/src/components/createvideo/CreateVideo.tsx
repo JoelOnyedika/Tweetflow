@@ -25,11 +25,11 @@ import * as z from "zod";
 import Sidebar from "@/components/hero/Sidebar";
 import DashNavbar from "@/components/hero/DashNavbar";
 import LoadingSpinner from "@/components/customs/LoadingSpinner";
-import { getCsrfToken } from '@/lib/funcs';
+import { getCsrfToken, chopUserCredits } from '@/lib/funcs';
 import { useToast } from '@/components/customs/Toast';
 import { useParams, useNavigate } from "react-router-dom";
 import {Volume2, Loader2} from 'lucide-react'
-
+import { creditSystem } from "@/lib/constants";
 
 const formSchema = z.object({
   text: z.string().min(1, {
@@ -50,13 +50,16 @@ export default function CreateVideo() {
 
   const [templatesList, setTemplatesList] = useState(null);
   const [voiceList, setVoiceList] = useState(null);
-  const [videoText, setVideoText] = useState(null);
+  const [videoText, setVideoText] = useState('');
   const [audioPreviewUrl, setAudioPreviewUrl] = useState('')
   const [isAudioLoading, setIsAudioLoading] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isLoading, setIsLoading] = useState(false)
   const [estimatedTime, setEstimatedTime] = useState(null)
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [percentage, setPercentage] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   const fetchVoiceModels = async () => {
     try {
@@ -124,7 +127,8 @@ export default function CreateVideo() {
       setAudioPreviewUrl(selectedVoice.preview_url);
     }
 
-    console.log(selectedVoice, selectedTemplate, videoText)
+
+    // videoText.forEach((char) => console.log(char))
 
   }, [selectedVoice, audioPreviewUrl, selectedTemplate, videoText]);
 
@@ -136,13 +140,55 @@ export default function CreateVideo() {
     },
   });
 
-  async function onSubmit(values:any) {
-    console.log(values);
-    try {
-      setIsLoading(true)
-      openWebSocketConnection()
+  const calculateEstimatedTime = (text: string) => {
+    const textLen = text.length
+    const avg = 2.6
+    const duration = textLen * avg
+    return duration
+  }
 
-      const csrftoken = await getCsrfToken()
+  const startCountdown = () => {
+    setTimeLeft(calculateEstimatedTime(videoText));
+    setIsLoading(true);
+  };
+
+
+  async function onSubmit(values: any) {
+  console.log(values);
+
+  try {
+    setIsLoading(true);
+    const { data: creditData, error: creditError } = await chopUserCredits(id, creditSystem.createVideo);
+    if (creditData) {
+      const text = values.text || "";
+      const totalDuration = calculateEstimatedTime(text);
+      let timeLeft = totalDuration;
+      let intervalSpeed = 1000; // Initial speed of 1 second interval
+
+      const intervalId = setInterval(() => {
+        timeLeft -= intervalSpeed / 1000;
+        let currentProgress = ((totalDuration - timeLeft) / totalDuration) * 100;
+
+        if (currentProgress >= 95 && currentProgress < 99 && timeLeft > 0) {
+          intervalSpeed = 3000; 
+        }
+
+        if (currentProgress >= 99) {
+          currentProgress = 99; 
+          setProgress(currentProgress.toFixed(2)); 
+          return; 
+        }
+
+        setProgress(currentProgress.toFixed(2)); 
+
+        if (timeLeft <= 0) {
+          clearInterval(intervalId);
+          setProgress(100); 
+        }
+      }, intervalSpeed);
+
+      const csrftoken = await getCsrfToken();
+
       const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/create-video/`, {
         headers: {
           "Content-Type": "application/json",
@@ -150,48 +196,34 @@ export default function CreateVideo() {
         },
         method: 'POST',
         credentials: 'include',
-        body: JSON.stringify(values)
-      })
-      const { data, error } = await response.json()
-      
+        body: JSON.stringify(values),
+      });
+
+      const { data, error } = await response.json();
+
+      clearInterval(intervalId);
+      setProgress(100);
+
       if (error) {
-        setIsLoading(false)
-        console.log(error)
-        showToast(error.message, 'error')
+        setIsLoading(false);
+        console.log(error);
+        showToast(error.message, 'error');
       }
-      console.log(data, error)
-      setIsLoading(false)  
-    }
-    catch(error) {
-      console.log(error)
-      showToast('Something went wrong. Please refresh.', 'error')
+
+      setIsLoading(false);
+    } else {
       setIsLoading(false)
-    }
+      showToast(creditError.message,'error')
+      // setProgress(100)
+      
+    } 
+
+  } catch (error) {
+    console.log(error);
+    showToast('Something went wrong. Please refresh.', 'error');
+    setIsLoading(false);
   }
-
-  const openWebSocketConnection = () => {
-    const ws = new WebSocket(`${import.meta.env.VITE_BACKEND_WSS_SERVER_URL}/ws/estimate/`)
-
-    ws.onopen = () => {
-      console.log('WebSocket connection opened')
-    }
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-
-      if (data.estimated_time) {
-        setEstimatedTime(data.estimated_time)
-      }
-    }
-
-    ws.onclose = () => {
-      console.log('WebSocket connection closed')
-    }
-
-    ws.onerror = (error) => {
-      console.log("WebSocket error: ", error)
-    }
-  }
+}
 
 
  const handleVoiceChange = (value) => {
@@ -347,9 +379,10 @@ const playAudioPreview = () => {
                         </video>
                       </CardContent>
                     </Card>
-                    <Button type="submit" disabled={videoText === null || selectedVoice === null || selectedTemplate === null || isLoading} className="w-full">
-                      {estimatedTime ? `Estimated processing time: ${estimatedTime}` : isLoading ? "Generating video. This might take a while": "Create Video"}
-                      {estimatedTime}
+                    <Button type="submit" disabled={videoText === '' || selectedVoice === null || selectedTemplate === null || isLoading} className="w-full">
+                      <span className="font-semibold">
+                        {isLoading ? `Processing... ${progress}%`: `Create Video: ${creditSystem.createVideo} Credits`}
+                      </span>
                     </Button>
                   </div>
                 </div>

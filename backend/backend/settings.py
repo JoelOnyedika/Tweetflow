@@ -58,7 +58,6 @@ SESSION_COOKIE_NAME = 'sessionid'  # This is the default, but let's be explicit
 SESSION_COOKIE_HTTPONLY = False
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-ASGI_APPLICATION = 'core.asgi.application'
 
 LOGGING = {
     'version': 1,
@@ -82,8 +81,6 @@ LOGGING = {
 # Application definition
 
 INSTALLED_APPS = [
-    'channels',
-
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

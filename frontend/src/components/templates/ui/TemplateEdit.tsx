@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,29 +9,47 @@ import { TIKTOK_HEIGHT } from "./TemplateCreator";
 import { Loader2 } from 'lucide-react'
 import { creditSystem } from "@/lib/constants";
 
+ 
 
 const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate, isSavingTemplate }) => {
   const [editableValues, setEditableValues] = useState({
-    fontSize: templateSettings.fontSize,
-    lineHeight: templateSettings.lineHeight,
-    marginTop: templateSettings.marginTop,
-    marginLeft: templateSettings.marginLeft,
-    marginRight: templateSettings.marginRight,
+    ...templateSettings
   });
+
+  useEffect(() => {
+      setEditableValues({
+      ...templateSettings,
+      fontSize: templateSettings.fontSize,
+      lineHeight: templateSettings.lineHeight,
+      marginTop: templateSettings.marginTop,
+      marginLeft: templateSettings.marginLeft,
+      marginRight: templateSettings.marginRight,
+    })
+
+  }, [templateSettings])
+
+  
 
   const handleMediaUpload = (e) => {
     const file = e.target.files[0];
+    console.log(file)
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => handleSettingChange("media", e.target.result);
+      const fileType = file.type.split('/')[0];
+      reader.onload = (e) => handleSettingChange("media", {
+        type: fileType,
+        url: e.target.result
+      });
       reader.readAsDataURL(file);
-      console.log(templateSettings.media)
+    } else {
+      console.log('No file read')
     }
   };
 
   const handleInputChange = (setting, value) => {
     const numValue = parseFloat(value);
     if (!isNaN(numValue)) {
+      setEditableValues({ ...editableValues, [setting]: numValue });
       setEditableValues({ ...editableValues, [setting]: numValue });
       handleSettingChange(setting, numValue);
     }
@@ -52,6 +70,7 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate, isS
       />
     </div>
   );
+
 
   return (
     <Card className="w-full">
@@ -106,7 +125,7 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate, isS
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Arial">Arial</SelectItem>
-                <SelectItem value="Helvetica">Helvetica</SelectItem>
+                <SelectItem value="Courier">Courier</SelectItem>
                 <SelectItem value="Times New Roman">Times New Roman</SelectItem>
               </SelectContent>
             </Select>

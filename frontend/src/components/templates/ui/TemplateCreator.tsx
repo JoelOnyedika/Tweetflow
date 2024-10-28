@@ -61,13 +61,13 @@ export default function TemplateCreator() {
 
       setFetchedTemplateData(data.data[0]);
     } catch (error) {
-      console.log(error);
+      
       showToast('Whoops something went wrong while fetching your templates', 'error');
     }
   };
 
   useEffect(() => {
-    console.log('templateId', templateId);
+    
 
     if (templateId) {
       getUserTemplatesDataById();
@@ -76,11 +76,10 @@ export default function TemplateCreator() {
 
   useEffect(() => {
     if (fetchedTemplateData) {
-      console.log('fetchedTemplateData', fetchedTemplateData);
 
       const templateData = {
-        ...templateSettings,
         id: fetchedTemplateData.id,
+        userId: fetchedTemplateData.user,
         media: fetchedTemplateData.media,
         text: fetchedTemplateData.text,
         fontFamily: fetchedTemplateData.font_family,
@@ -97,7 +96,8 @@ export default function TemplateCreator() {
       };
 
       setTemplateSettings(templateData);
-      console.log('aaa', templateData);
+      
+      
     }
   }, [fetchedTemplateData]);
 
@@ -131,10 +131,10 @@ export default function TemplateCreator() {
                         credentials: 'include',
                     }
                 );
-                console.log('resTemp', response )
+                
 
                 const responseData = await response.json();
-                console.log('res', responseData)
+                
 
                 if (responseData.error) {
                     setIsSavingTemplate(false)
@@ -143,6 +143,7 @@ export default function TemplateCreator() {
                 } else {
                     setIsSavingTemplate(false)
                     showToast("Template saved successfully", 'success');
+                    console.log(responseData.data)
                     window.location.href = `/${userParamId}/templates`;
                 }
             } catch (error) {

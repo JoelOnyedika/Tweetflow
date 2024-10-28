@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect} from "react";
 import { Link } from "react-router-dom";
 import { VideoIcon, Pencil, Trash2 } from "lucide-react";
 import DashNavbar from "@/components/hero/DashNavbar";
@@ -12,7 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {useParams, useNavigate} from 'react-router-dom'
+import { useToast } from "@/components/customs/Toast";
+import LoadingSpinner from "@/components/customs/LoadingSpinner";
 import * as z from "zod";
+import { getCsrfToken } from "@/lib/funcs";
+
 
 const videoData = {
   youtube: [
@@ -202,7 +207,12 @@ const EditVideoDialog = ({ video, isOpen, onClose, onSave, onDelete }) => {
 export default function ScheduledVideo() {
   const [activeTab, setActiveTab] = useState("youtube");
   const [editingVideo, setEditingVideo] = useState(null);
-  const [videos, setVideos] = useState(videoData);
+  const [videos, setVideos] = useState(null);
+  const [isLoading, setIsLoading] = useState(false)
+
+  const { id } = useParams();
+  const { showToast, ToastContainer } = useToast();
+  const navigate = useNavigate()
 
   const handleEditVideo = (video) => {
     setEditingVideo(video);
@@ -232,6 +242,43 @@ export default function ScheduledVideo() {
     setEditingVideo(null);
   };
 
+const fetchInitialVideo = async () => {
+  try {
+    setIsLoading(true);
+    const csrftoken = await getCsrfToken();
+    if (id === null || !csrftoken) {
+      return navigate('/login');
+    }
+
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/videos-by-platforms/${id}/`, {
+      method: "POST",
+      credentials: 'include',
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken,
+      },
+      body: JSON.stringify({ platform: activeTab }), // Send the activeTab as a JSON object
+    });
+
+    const data = await response.json(); 
+    if (!response.ok) {
+      showToast(data.error.message || "Failed to fetch videos", 'error');
+      setIsLoading(false);
+    } else {
+      setVideos(data.data); // Assuming the response has the structure { data: [...] }
+      setIsLoading(false);
+    }
+  } catch (error) {
+    showToast("Whoops, something went wrong while fetching videos");
+    setIsLoading(false);
+  }
+}
+
+
+  useEffect(() => {
+    fetchInitialVideo()
+  }, [activeTab])
+
   return (
     <div className="flex min-h-screen w-full bg-background">
       <aside className="flex h-full w-14 flex-col border-r sm:w-60">
@@ -245,7 +292,7 @@ export default function ScheduledVideo() {
       </aside>
       <div className="flex flex-1 flex-col">
         <DashNavbar />
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
+        {isLoading ? <LoadingSpinner/> : <main className="flex-1 overflow-auto p-4 sm:p-6">
           <h1 className="text-3xl font-bold mb-6">Scheduled Videos</h1>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6">
@@ -253,8 +300,8 @@ export default function ScheduledVideo() {
               <TabsTrigger value="tiktok">TikTok</TabsTrigger>
               <TabsTrigger value="instagram">Instagram</TabsTrigger>
             </TabsList>
-            {Object.entries(videos).map(([platform, platformVideos]) => (
-              <TabsContent key={platform} value={platform}>
+            {videos !== null && videos.map((video) => (
+              <TabsContent key={activeTab} value={activeTab}>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {platformVideos.map((video) => (
                     <VideoCard key={video.id} video={video} onEdit={handleEditVideo} />
@@ -264,6 +311,8 @@ export default function ScheduledVideo() {
             ))}
           </Tabs>
         </main>
+      }
+        
       </div>
       {editingVideo && (
         <EditVideoDialog

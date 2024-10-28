@@ -12,6 +12,7 @@ import mimetypes
 import os
 import base64
 from rest_framework import status
+from functools import lru_cache
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,12 @@ B2_BUCKET_NAME = os.getenv('B2_BUCKET_NAME')
 
 info = InMemoryAccountInfo()
 b2_api = B2Api(info)
+
+@lru_cache(maxsize=1)
+def get_b2_api():
+    """Create and return a cached B2Api instance"""
+    info = InMemoryAccountInfo()
+    return B2Api(info)
 
 
 def get_templates(request, pk):
@@ -75,7 +82,6 @@ class UploadTemplatesView(APIView):
             # logger.info(f"Received CSRF token: {csrf_token}")
 
             data = request.data
-            print(data)
             template_id = data.get('id', uuid.uuid4()) 
             user_id = data.get('userId')  
             text = data.get('text')
@@ -92,17 +98,41 @@ class UploadTemplatesView(APIView):
             right_margin = data.get('marginRight', 30)
             media = data.get('media')
 
-            def upload_media(type: str, user_id: str, template_id: str, file: any):
+            def clear_folder(bucket, folder_path):
+               try:
+                   # List all files in the folder 
+                   file_versions = bucket.ls(folder_path)
+                   
+                   # Delete any existing files in the folder
+                   for file_info, _ in file_versions:
+                       bucket.delete_file_version(file_info.id_, file_info.file_name)
+                       print(f"Deleted existing file: {file_info.file_name}")
+                       
+                   return True
+               except Exception as e:
+                   logger.error(f"Error clearing folder: {str(e)}")
+                   return False
+
+            def upload_media(user_id: str, template_id: str, file: any):
                 if not file:
                     return JsonResponse({'error': {'message': 'No file provided'}}, status=400)
 
                 randomUUID = uuid.uuid4()
-                file_path = f'{type}s/{user_id}/{template_id}/{randomUUID}'
+                file_path = f'templates/{user_id}/{template_id}/{randomUUID}'
 
-                if type not in ['image', 'video']:
-                    return JsonResponse({'error': {'message': 'Invalid media type'}}, status=400)
+                # if type not in ['image', 'video']:
+                #     return JsonResponse({'error': {'message': 'Invalid media type'}}, status=400)
+
+                if not user_id or user_id == None:
+                    return JsonResponse({'error': {'message': 'User not found'}})
 
                 try:
+                    b2_api = get_b2_api()
+                    bucket = b2_api.get_bucket_by_name(B2_BUCKET_NAME)
+                    print('connection to bucket')
+
+                    clear_folder(bucket, f'templates/{user_id}/{template_id}/')
+                    
                     mime_type, base64_data = file.split(';base64,')
                     mime_type = mime_type.split(':')[1]
                     file_bytes = base64.b64decode(base64_data)
@@ -117,21 +147,44 @@ class UploadTemplatesView(APIView):
                         file_path,
                         content_type=mime_type
                     )
-                    return uploaded_file.id_
+                    print('uploaded ', uploaded_file)
+                    print(f'https://f005.backblazeb2.com/file/{B2_BUCKET_NAME}/{file_path}')
+                    return f'https://f005.backblazeb2.com/file/{B2_BUCKET_NAME}/{file_path}'
                 except Exception as e:
                     logger.error(f"Media upload error: {str(e)}")
                     return JsonResponse({'error': {'message': 'Failed to upload media'}}, status=500)
 
             def handle_backblaze_connection():
                 try:
-                    # Authorize Backblaze B2 account
+                    # Get cached or create new B2Api instance
+                    b2_api = get_b2_api()
+                    
+                    # Authorize account (will reauthorize if token expired)
                     b2_api.authorize_account('production', B2_APPLICATION_KEY_ID, B2_APPLICATION_KEY)
+                    
+                    # Get bucket
                     bucket = b2_api.get_bucket_by_name(B2_BUCKET_NAME)
-                    print("Successfully authorized Backblaze B2 account")
+                    logger.info(f"Successfully connected to Backblaze B2 bucket: {B2_BUCKET_NAME}")
                     return bucket
+                    
                 except Exception as e:
-                    logger.error(f"Backblaze connection error: {str(e)}")
-                    return JsonResponse({"error": {"message": "Could not connect to Backblaze B2"}}, status=500)
+                    error_msg = str(e)
+                    logger.error(f"Backblaze connection error: {error_msg}")
+                    
+                    # Determine if error is authorization related
+                    if "unauthorized" in error_msg.lower() or "authentication" in error_msg.lower():
+                        message = "Authorization failed for Backblaze B2. Please check your credentials."
+                    elif "bucket" in error_msg.lower():
+                        message = f"Could not find bucket: {B2_BUCKET_NAME}"
+                    else:
+                        message = "Could not connect to Backblaze B2"
+                        
+                    return JsonResponse({
+                        "error": {
+                            "message": message,
+                            "details": error_msg
+                        }
+                    }, status=500)
 
             bucket = None
             if media:
@@ -141,17 +194,17 @@ class UploadTemplatesView(APIView):
 
             def handle_upload():
                 if media:
-                    file_type, _ = mimetypes.guess_type(media)
+                    file_type, _ = mimetypes.guess_type(media['url'])
                     if not file_type:
                         return JsonResponse({"error": {"message": "Unsupported file type"}}, status=400)
 
                     if file_type.startswith('video/'):
-                        video_url = upload_media('video', user_id, template_id, media)
+                        video_url = upload_media(user_id, template_id, media['url'])
                         if isinstance(video_url, JsonResponse):
                             return video_url
                         media_url = video_url
                     elif file_type.startswith('image/'):
-                        image_url = upload_media('image', user_id, template_id, media)
+                        image_url = upload_media(user_id, template_id, media['url'])
                         if isinstance(image_url, JsonResponse):
                             return image_url
                         media_url = image_url
@@ -190,7 +243,7 @@ class UploadTemplatesView(APIView):
             if does_template_name_exist and does_template_id_exist:
                 return handle_upload()
             elif does_template_name_exist:
-                return JsonResponse({'error': {'message':'A template with this name already exists.'}}, status=400)
+                return JsonResponse({'error': {'message':'A template with this name already exists.'}}, status400)
             else:
                 return handle_upload()
 

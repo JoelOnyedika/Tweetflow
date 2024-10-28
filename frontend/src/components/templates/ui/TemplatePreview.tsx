@@ -16,11 +16,14 @@ const TemplatePreview = ({ templateSettings }) => {
   const { showToast, ToastContainer } = useToast();
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [videoSource, setVideoSource] = useState(null);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
 
   useEffect(() => {
     // console.log(templateSettings)
     const videoElement = videoRef.current;
+    console.log(videoElement)
 
     const handleCanPlay = () => {
       setIsLoading(false);
@@ -52,6 +55,14 @@ const TemplatePreview = ({ templateSettings }) => {
     window.addEventListener('resize', resizeCanvas);
     return () => window.removeEventListener('resize', resizeCanvas);
   }, []);
+
+useEffect(() => {
+  return () => {
+    if (videoSource instanceof File && videoRef.current?.src) {
+      URL.revokeObjectURL(videoRef.current.src);
+    }
+  };
+}, [videoSource]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -131,40 +142,104 @@ const TemplatePreview = ({ templateSettings }) => {
       });
     }
 
+    const isURL = (str) => {
+      try {
+        new URL(str);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    // Helper function to detect media type from URL or data URL
+    const detectMediaType = (mediaSource) => {
+      if (!mediaSource) return null;
+      
+      // If it's already an object with type, return that
+      if (mediaSource.type) return mediaSource.type;
+      
+      // Handle data URLs
+      if (mediaSource.startsWith('data:')) {
+        if (mediaSource.startsWith('data:video/')) return 'video';
+        if (mediaSource.startsWith('data:image/')) return 'image';
+        return null;
+      }
+
+      if (mediaSource instanceof File) {
+        return mediaSource.type.startsWith('video/') ? 'video' : 
+        mediaSource.type.startsWith('image/') ? 'image' : null;
+      }
+
+      
+      // Handle regular URLs by checking common extensions
+      const url = mediaSource.toLowerCase();
+      if (url.match(/\.(jpg|jpeg|png|gif|webp|svg)($|\?)/)) return 'image';
+      if (url.match(/\.(mp4|webm|mov|avi|mkv)($|\?)/)) return 'video';
+      
+      return null;
+    };
+
+    const loadVideo = (source) => {
+      if (!videoRef.current) return;
+      
+      setIsVideoLoaded(false);
+      
+      if (source instanceof File) {
+        videoRef.current.src = URL.createObjectURL(source);
+      } else if (typeof source === 'string') {
+        videoRef.current.src = source;
+      }
+    };
+
+    // Update your existing isVideo check
+    const isVideo = templateSettings.media && (
+      (templateSettings.media instanceof File && templateSettings.media.type.startsWith('video/')) ||
+      (typeof templateSettings.media === 'object' && templateSettings.media.type === 'video') ||
+      (typeof templateSettings.media === 'string' && 
+        (templateSettings.media.startsWith('data:video/') || 
+         templateSettings.media.match(/\.(mp4|webm|mov|avi|mkv)($|\?)/i)))
+    );
+
+    // Update your existing isImage check
+    const isImage = templateSettings.media && (
+      (typeof templateSettings.media === 'object' && templateSettings.media.type === 'image') ||
+      (typeof templateSettings.media === 'string' && 
+        (templateSettings.media.startsWith('data:image/') || 
+         templateSettings.media.match(/\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i)))
+    );
+
 
     function drawFrame() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
       if (templateSettings.media) {
-        // console.log('media', templateSettings.media)
-        if (isVideo(templateSettings.media) && videoRef.current) {
-          drawContent(videoRef.current);
-        } else if (isImage(templateSettings.media) && img) {
+        const mediaSource = templateSettings.media;
+        
+        if (isVideo) {
+          if (!videoSource || videoSource !== mediaSource) {
+            setVideoSource(mediaSource);
+            loadVideo(mediaSource);
+          }
+          
+          if (videoRef.current) {
+            drawContent(videoRef.current);
+          }
+        } else if (isImage && img) {
           drawContent(img);
         }
       } else {
         ctx.fillStyle = templateSettings.backgroundColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-    
+      
       drawText();
-    
       animationFrameId = requestAnimationFrame(drawFrame);
     }
     
-    function isImage(media) {
-      const extensions = ['.png', '.jpeg', '.jpg', '.webp']
-      return extensions.some(ext => media && media.endsWith(ext))
-    }
-    
-    function isVideo(media) {
-      const extensions = ['.mkv', '.avi', '.mov', '.mp4']
-      return extensions.some(ext => media && media.endsWith(ext))
-    }
-    
-    if (templateSettings.media && isImage(templateSettings.media)) {
+    if (templateSettings.media && isImage) {
       img = new Image();
-      img.src = templateSettings.media;
+      img.src = typeof templateSettings.media === 'object' ? 
+        templateSettings.media.url : templateSettings.media;
       img.onload = () => {
         drawFrame();
       };
@@ -204,8 +279,9 @@ const TemplatePreview = ({ templateSettings }) => {
     }
   };
 
-  const isVideo = templateSettings.media && templateSettings.media.startsWith('data:video/');
-
+  const isVideo = templateSettings.media && templateSettings.media.type === 'video';
+  console.log(templateSettings.media)
+  
   return (
     <Card className="w-full">
       <CardContent className="p-6" ref={containerRef}>
@@ -223,11 +299,15 @@ const TemplatePreview = ({ templateSettings }) => {
         {isVideo && (
           <video
             ref={videoRef}
-            src={templateSettings.media}
             style={{ display: 'none' }}
             loop
             muted
             autoPlay={true}
+            onLoadedData={() => setIsVideoLoaded(true)}
+            onError={() => {
+              console.error('Error loading video');
+              setIsVideoLoaded(false);
+            }}
           />
         )}
         <div className="flex space-y-3 flex-col">

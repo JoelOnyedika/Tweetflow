@@ -2,7 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 import uuid
 from django.contrib.auth.models import AbstractUser
-from datetime import timedelta
+from datetime import timedelta, time, date
+
 
 # Create your models here.
 class CustomUser(AbstractUser):
@@ -45,6 +46,9 @@ class Video(models.Model):
     title = models.CharField(max_length=200)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     tweet_text = models.TextField()
+    upload_date = models.DateField()
+    upload_time = models.TimeField()
+    upload_status = models.TextField(default="Pending") #Failed, Uploaded, Pending
     template = models.ForeignKey(Template, on_delete=models.SET_NULL, null=True)
     video_url = models.URLField(max_length=200)  # URL of the generated video
     created_at = models.DateTimeField(auto_now_add=True)
@@ -83,7 +87,7 @@ class ScheduledVideo(models.Model):
 
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     video = models.ForeignKey(Video, on_delete=models.CASCADE)  # Link to the generated video
-    platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES, null=True)
+    platforms = models.ManyToManyField('Platform', default='youtube')
     scheduled_date = models.DateField()
     scheduled_time = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -91,3 +95,6 @@ class ScheduledVideo(models.Model):
 
     def __str__(self):
         return self.video
+
+class Platform(models.Model):
+    name = models.CharField(max_length=20, unique=True, choices=ScheduledVideo.PLATFORM_CHOICES)

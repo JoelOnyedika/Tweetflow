@@ -61,8 +61,10 @@ export const chopUserCredits = async (userId, amountOfCredits) => {
             credentials: 'include',
         });
 
+
         // Ensure the response is in JSON format
         const getCreditsData = await getCreditsResponse.json();
+        // console.log('1', )
 
         if (!getCreditsResponse.ok) {
             // If there's an error with fetching the credits
@@ -71,26 +73,30 @@ export const chopUserCredits = async (userId, amountOfCredits) => {
 
         if (getCreditsData.data) {
             // Deduct credits by sending a POST request
-            const chopResponse = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/chop-credits/${userId}/`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken,
-                },
-                body: JSON.stringify({ amount: amountOfCredits }), // Ensure the correct format
-            });
+            if (getCreditsData.data[0].credits > amountOfCredits) {
+                const chopResponse = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/chop-credits/${userId}/`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: JSON.stringify({ amount: amountOfCredits }), // Ensure the correct format
+                });
 
-            // Convert the response to JSON
-            const chopResponseData = await chopResponse.json();
+                // Convert the response to JSON
+                const chopResponseData = await chopResponse.json();
 
-            if (!chopResponse.ok || chopResponseData.error) {
-                // Return the error if present
-                return { error: chopResponseData.error || { message: "Error chopping credits" } };
+                if (!chopResponse.ok || chopResponseData.error) {
+                    // Return the error if present
+                    return { error: chopResponseData.error || { message: "Error chopping credits" } };
+                }
+
+                // Return the data if successful
+                return { data: chopResponseData.data };    
+            } else {
+                return {error: {message: "Whoops you do not have enough credits"}}
             }
-
-            // Return the data if successful
-            return { data: chopResponseData.data };
         } else {
             return { error: { message: "Something went wrong, please refresh." } };
         }

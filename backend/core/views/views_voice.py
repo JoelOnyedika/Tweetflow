@@ -71,6 +71,8 @@ def get_voice_models(request):
             
             result = response.json()
 
+            print('result', result['error'])
+
             if not result.get('error'):
                 try:
                     voices = VoiceTier.objects.all()
@@ -172,3 +174,54 @@ def get_voice_models_by_id(request, pk):
         logger.error(f"Get ElevenLabs id voices error: {str(e)}")
         return JsonResponse({'error': {'message': 'An unexpected error occurred.'}}, status=500)
 
+# views.py
+import requests
+from django.http import JsonResponse
+from rest_framework.decorators import api_view
+
+@api_view(['POST'])
+def upload_voice(request):
+    # Check for file in request data
+    if 'voiceFile' not in request.FILES:
+        return JsonResponse({'error': 'No audio file provided'}, status=400)
+    if 'userId' not in request.FILES:
+        return JsonResponse({'error': 'User id not provided. Please login'}, status=400)
+
+    # Get the voice name and audio file
+    voice_name = request.data.get('voiceName')
+    user_id = request.data.get('userId')
+    audio_file = request.FILES['voiceFile']
+
+    # Send the file to Eleven Labs API without saving locally
+    try:
+        headers = {
+            'Authorization': f'Bearer {settings.ELEVEN_LABS_API_KEY}',
+        }
+        data = {
+            "voice_name": voice_name,
+        }
+        files = {
+            'file': (audio_file.name, audio_file.read(), audio_file.content_type)
+        }
+        response = requests.post(
+            'https://api.elevenlabs.io/voice', headers=headers, data=data, files=files
+        )
+
+        # Parse the response
+        if response.status_code == 200:
+            voice_id = response.json().get('voice_id')
+            
+            # Upload the voice to the db
+            user = CustomUser.objects.get(id=user_id)
+            if user.DoesNotExist:
+                return JsonResponse({'error': {'message': 'Well, this user does not exist.'}})
+            else:
+                user.voices_id.append(voice_id)
+                return JsonResponse({'voice_id': voice_id})
+
+
+        else:
+            return JsonResponse({'error': {'message':{'Voice cloning failed'}}}, status=response.status_code)
+    except Exception as e:
+        logger.log(f"Error in voice cloning for user {id}: ", e)    
+        return JsonResponse({'error': {'message':{'Whoops something went wrong while connecting to the server.'}}}, status=500)

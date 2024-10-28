@@ -211,9 +211,9 @@ export default function Templates() {
                           `rgb(${hexToRgb(data.background_color)})`,
                       }}
                     >
-                      {data.media !== "None" && (
+                      {data.media !== null && !data.media.endsWith('.mp4') ? (
                         <img src={data.media} alt="Media content" />
-                      )}
+                      ) : <video src={data.media} alt="Media content" />}
                     </CardContent>
                   </Card>
                 ))

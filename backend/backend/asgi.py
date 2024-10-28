@@ -7,11 +7,4 @@ from core import routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 
-application = ProtocolTypeRouter({
-	'https': get_asgi_application(),
-	'websocket': AuthMiddleWareStack(
-		URLRouter(
-			routing.websocket_urlpatterns
-		)
-	)
-})
+application =  get_asgi_application()

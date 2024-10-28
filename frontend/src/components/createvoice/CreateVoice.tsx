@@ -8,7 +8,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,13 +18,14 @@ import DashNavbar from "@/components/hero/DashNavbar";
 import Sidebar from "@/components/hero/Sidebar";
 import { VideoIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import {useParams} from 'react-router-dom'
 
 const formSchema = z.object({
   voiceName: z.string().min(2, {
     message: "Voice name must be at least 2 characters.",
   }),
-  voiceFile: z.instanceof(File).refine((file) => file.size <= 5000000, {
-    message: "Voice file must be less than 5MB.",
+  voiceFile: z.instanceof(File).refine((file) => file.size <= 9000000, {
+    message: "Voice file must be lesser than 9MB.",
   }),
   agreeTerms: z.boolean().refine((value) => value === true, {
     message: "You must agree to the terms and conditions.",
@@ -33,6 +33,7 @@ const formSchema = z.object({
 });
 
 export default function CreateVoice() {
+  const {id} = useParams()
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,9 +43,26 @@ export default function CreateVoice() {
     },
   });
 
-  function onSubmit(values) {
-    console.log(values);
-  }
+  const isFormValid = form.watch("voiceName") && form.watch("voiceFile") && form.watch("agreeTerms");
+
+  const onSubmit = async (values) => {
+    const formData = new FormData();
+    formData.append("userId", id)
+    formData.append("voiceName", values.voiceName);
+    formData.append("voiceFile", values.voiceFile);
+    formData.append("agreeTerms", values.agreeTerms);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/upload-voice/`, { 
+        method: "POST",
+        body: formData,
+      });
+      const data  = await response.json();
+      console.log("Voice ID:", data.voice_id);
+    } catch (error) {
+      console.error("Error uploading voice:", error);
+    }
+  };
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -91,9 +109,6 @@ export default function CreateVoice() {
                           {...rest}
                         />
                       </FormControl>
-                      <FormDescription>
-                        Upload a voice sample (max 5MB)
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -111,12 +126,11 @@ export default function CreateVoice() {
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>I agree to the terms and conditions</FormLabel>
-                        <FormDescription>llll</FormDescription>
                       </div>
                     </FormItem>
                   )}
                 />
-                <Button type="submit">Submit</Button>
+                <Button type="submit" disabled={!isFormValid}>Submit</Button>
               </form>
             </Form>
             <Card>

@@ -118,7 +118,7 @@ def generate_tiktok_video():
         for i, text_segment in enumerate(segments):
             txt_clip = TextClip(
                 txt=text_segment,
-                fontsize=data["font_size"],
+                fontsize=data["font_size"]*2,
                 color=f"#{text_color[0]:02x}{text_color[1]:02x}{text_color[2]:02x}",
                 font=data["font_family"],
                 method='caption',
@@ -139,9 +139,9 @@ def generate_tiktok_video():
         final_clip = final_clip.set_audio(audio_clip)
 
         # Write the video to a file
-        print('writing vidoe')
+        print('writing video')
         final_clip = final_clip.subclip(0, text_duration)  # Ensure the final video doesn't exceed the text duration
-        final_clip.write_videofile(output_filename, codec="libx264", fps=24, threads=4)
+        final_clip.write_videofile(output_filename, codec="libx264", fps=24, threads=4, preset='ultrafast')
 
         # Clean up the generated audio file
         os.remove("audio.mp3")
