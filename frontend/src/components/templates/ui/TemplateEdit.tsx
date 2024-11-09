@@ -8,13 +8,16 @@ import ColorPicker from "@/components/ui/color-picker";
 import { TIKTOK_HEIGHT } from "./TemplateCreator";
 import { Loader2 } from 'lucide-react'
 import { creditSystem } from "@/lib/constants";
+import { useToast } from "@/components/customs/Toast";
+import UploadDialog from "@/components/customs/UploadDialog";
 
- 
-
-const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate, isSavingTemplate }) => {
+const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate, isSavingTemplate, setMediaStuff }) => {
   const [editableValues, setEditableValues] = useState({
     ...templateSettings
   });
+  const { showToast, ToastContainer } = useToast();
+  const [percentLoaded, setPercentLoaded] = useState(0)
+  const [isFileUploading, setIsFileUploading] = useState(false)
 
   useEffect(() => {
       setEditableValues({
@@ -28,23 +31,49 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate, isS
 
   }, [templateSettings])
 
-  
+  // const handleMediaUpload = async (e) => {
+  //   const file = e.target.files[0];
+  //   if (!file) return;
 
-  const handleMediaUpload = (e) => {
-    const file = e.target.files[0];
-    console.log(file)
-    if (file) {
-      const reader = new FileReader();
-      const fileType = file.type.split('/')[0];
-      reader.onload = (e) => handleSettingChange("media", {
-        type: fileType,
-        url: e.target.result
-      });
-      reader.readAsDataURL(file);
-    } else {
-      console.log('No file read')
-    }
-  };
+  //   const fileType = file.type.split('/')[0];
+  //   const validTypes = ['video', 'image'];
+    
+  //   if (!validTypes.includes(fileType)) {
+  //     showToast("Please upload a valid video or image file");
+  //     return;
+  //   }
+
+  //   try {
+  //     // Create object URL for the file
+  //     const objectUrl = URL.createObjectURL(file);
+      
+  //     // Update template settings with the new media
+  //     handleSettingChange("media", {
+  //       type: fileType,
+  //       url: objectUrl,
+  //       originalFile: file
+  //     });
+  //     setMediaStuff({ type: fileType, url: objectUrl, originalFile: file })
+  //   } catch (error) {
+  //     console.error("File processing error:", error);
+  //     showToast("Error processing file. Please try again.");
+  //   }
+  // };
+
+const handleMediaUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const fileType = file.type.split('/')[0];
+  const validTypes = ['video', 'image'];
+  
+  if (!validTypes.includes(fileType)) {
+    showToast("Please upload a valid video or image file");
+    return;
+  }
+  
+  handleSettingChange("media", file);
+};
 
   const handleInputChange = (setting, value) => {
     const numValue = parseFloat(value);
@@ -73,7 +102,9 @@ const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate, isS
 
 
   return (
-    <Card className="w-full">
+    <Card className="w-full" disabled={isFileUploading}>
+      <UploadDialog text={"Uploading file"} percentLoaded={percentLoaded} isFileUploading={isFileUploading}/>
+    <ToastContainer />
       <CardContent className="p-6 space-y-6">
         <h2 className="text-2xl font-semibold mb-4">Template Settings</h2>
 

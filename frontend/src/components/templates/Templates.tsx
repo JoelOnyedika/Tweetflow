@@ -182,40 +182,51 @@ export default function Templates() {
               templateData === [] ? (
                 "You have no templates. Go create one"
               ) : (
-                templateData.map((data) => (
-                  <Card className="w-full max-w-sm mx-auto" key={data.id}>
-                    <CardHeader className="flex justify-between items-center pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        {data.template_name}
-                      </CardTitle>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() =>
-                            navigate(`/${id}/templates/${data.id}`)
-                          }
-                          className="rounded-md p-2 bg-slate-200 text-primary hover:bg-slate-300"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                            <button className="rounded-md p-2 bg-slate-200 text-red-600 hover:bg-red-100" onClick={() => handleDeleteTemplate(data.id)}>
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                      </div>
-                    </CardHeader>
+               templateData.map((data) => (
+                 <div key={data.id} className="relative flex flex-col h-64 w-full bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                   <div className="absolute inset-0 rounded-lg overflow-hidden">
+                     {data.media ? (
+                       data.media.endsWith('.mp4') ? (
+                         <video 
+                           src={data.media}
+                           className="w-full h-full object-cover"
+                           autoPlay 
+                           muted 
+                           loop
+                           loading="lazy"
+                         />
+                       ) : (
+                         <img
+                           src={data.media}
+                           alt={data.template_name}
+                           className="w-full h-full object-cover"
+                           loading="lazy"
+                         />
+                       )
+                     ) : (
+                       <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200" />
+                     )}
+                   </div>
 
-                    <CardContent
-                      className="aspect-[9/16] rounded-md overflow-hidden"
-                      style={{
-                        backgroundColor:
-                          data.media === null &&
-                          `rgb(${hexToRgb(data.background_color)})`,
-                      }}
-                    >
-                      {data.media !== null && !data.media.endsWith('.mp4') ? (
-                        <img src={data.media} alt="Media content" />
-                      ) : <video src={data.media} alt="Media content" />}
-                    </CardContent>
-                  </Card>
+                   <div className="relative h-full p-4 flex flex-col justify-between">
+                     <h3 className="text-lg font-semibold text-white stroke-black line-clamp-2">{data.template_name}</h3>
+
+                     <div className="flex gap-2">
+                       <button
+                         onClick={() => navigate(`/${id}/templates/${data.id}`)}
+                         className="flex-1 rounded-md p-2 bg-slate-200 text-primary hover:bg-slate-300 transition-colors duration-200"
+                       >
+                         Edit
+                       </button>
+                       <button
+                         onClick={() => handleDeleteTemplate(data.id)}
+                         className="rounded-md p-2 bg-red-100 text-red-600 hover:bg-red-200 transition-colors duration-200"
+                       >
+                         <Trash2 className="h-5 w-5" />
+                       </button>
+                     </div>
+                   </div>
+                 </div>
                 ))
               )
             ) : (

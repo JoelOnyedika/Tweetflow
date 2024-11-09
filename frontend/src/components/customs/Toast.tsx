@@ -21,7 +21,7 @@ export const Toast = ({ message, type = 'info', duration = 6000, onClose }) => {
 export const useToast = () => {
   const [toast, setToast] = useState(null);
 
-  const showToast = (message, type = 'info', duration = 6000) => {
+  const showToast = (message, type = 'info', duration = 10000) => {
     setToast({ message, type, duration });
   };
 

@@ -49,7 +49,7 @@ export default function CreateVideo() {
   const { showToast, ToastContainer } = useToast();
 
   const [templatesList, setTemplatesList] = useState(null);
-  const [voiceList, setVoiceList] = useState(null);
+  const [voiceList, setVoiceList] = useState(null); // must be null
   const [videoText, setVideoText] = useState('');
   const [audioPreviewUrl, setAudioPreviewUrl] = useState('')
   const [isAudioLoading, setIsAudioLoading] = useState(false)
@@ -123,14 +123,18 @@ export default function CreateVideo() {
   }, [id]);
 
   useEffect(() => {
+  form.setValue('text', videoText);
+}, []);
+
+  useEffect(() => {
     if (selectedVoice) { 
       setAudioPreviewUrl(selectedVoice.preview_url);
     }
 
-
+    console.log(videoText)
     // videoText.forEach((char) => console.log(char))
 
-  }, [selectedVoice, audioPreviewUrl, selectedTemplate, videoText]);
+  }, [selectedVoice, audioPreviewUrl, selectedTemplate]);
 
 
   const form = useForm({
@@ -231,10 +235,15 @@ export default function CreateVideo() {
     form.setValue('voice', value);
   };
 
-  const handleTextChange = (e) => {
-    setVideoText(e.target.value)
-    form.setValue('text', videoText);
-  };
+useEffect(() => {
+  form.setValue('text', videoText, { shouldDirty: true, shouldTouch: true });
+}, [videoText, form]);
+
+const handleTextChange = (e) => {
+  const newValue = e.target.value;
+  setVideoText(newValue);
+};
+
 
  const handleTemplateChange = (value) => {
     // console.log("Selected template:", value);
@@ -298,9 +307,8 @@ const playAudioPreview = () => {
                             <Textarea
                               placeholder="Enter your tweet content here..."
                               className="min-h-[150px]"
-                              {...field}
-                              onChange={handleTextChange}
                               value={videoText}
+                              onChange={handleTextChange}
                             />
                           </FormControl>
                           <FormMessage />
@@ -346,9 +354,11 @@ const playAudioPreview = () => {
                             </FormControl>
                             <SelectContent>
                               {voiceList && voiceList.map((data) => (
+                                <>
                                 <SelectItem key={data.id} value={data.voice_id} onClick={setAudioPreviewUrl(data.preview_url)}>
                                   {data.name}
                                 </SelectItem>
+                                </>
                               ))}
                             </SelectContent>
                           </Select>

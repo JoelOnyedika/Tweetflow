@@ -6,12 +6,15 @@ import requests
 api_key = os.getenv('ELEVENLABS_API_KEY')
 url = "https://api.elevenlabs.io/v1/voices"
 
-def generate_audio(text, audio_filename="audio.mp3"):
+def generate_audio(text: str, audio_filename="audio.mp3") -> str:
     try:
         """Generate audio from text using gTTS."""
+        print(audio_filename)
         tts = gTTS(text=text, lang='en')
         tts.save(audio_filename)
+        return audio_filename
     except Exception as e:
+        print(e)
         return jsonify({ 'error': {'message': "something went wrong while genrerating audio"} })
 
 

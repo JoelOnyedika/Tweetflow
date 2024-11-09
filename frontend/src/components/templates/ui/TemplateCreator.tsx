@@ -10,6 +10,9 @@ import { v4 as uuidV4 } from 'uuid';
 import { useToast } from "@/components/customs/Toast";
 import { chopUserCredits, getCsrfToken } from '@/lib/funcs';
 import { creditSystem } from "@/lib/constants";
+import axios from 'axios'
+import UploadDialog from "@/components/customs/UploadDialog";
+
 
 // Constants for TikTok video dimensions
 export const TIKTOK_WIDTH = 1080;
@@ -39,6 +42,8 @@ export default function TemplateCreator() {
   });
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [fetchedTemplateData, setFetchedTemplateData] = useState(null);
+  const [percentLoaded, setPercentLoaded] = useState(0)
+  const [templateMediaStuff, setTemplateMediaStuff] = useState(null)
 
   const getUserTemplatesDataById = async () => {
     try {
@@ -67,12 +72,18 @@ export default function TemplateCreator() {
   };
 
   useEffect(() => {
-    
-
     if (templateId) {
       getUserTemplatesDataById();
     }
   }, [templateId]);
+
+  useEffect(() => {
+    return () => {
+      if (templateSettings?.media?.url && templateSettings.media.url.startsWith('blob:')) {
+        URL.revokeObjectURL(templateSettings.media.url);
+      }
+    };
+  }, [templateSettings?.media?.url]);
 
   useEffect(() => {
     if (fetchedTemplateData) {
@@ -105,58 +116,74 @@ export default function TemplateCreator() {
     setTemplateSettings({ ...templateSettings, [setting]: value });
   };
 
+  const setMediaStuff = (data) => {
+    console.log(data)
+    setTemplateMediaStuff(data)
+  }
+
   const saveTemplate = async () => {
     try {
-        setIsSavingTemplate(true)
+        setIsSavingTemplate(true);
         const csrftoken = await getCsrfToken();
 
         // Chop user credits and check for errors
         const { data, error } = await chopUserCredits(userParamId, creditSystem.createTemplate);
-
         if (error) {
-            setIsSavingTemplate(false)
+            setIsSavingTemplate(false);
             showToast(error.message, 'error');
-        } else if (data) {
+            return;
+        }
+
+        if (data) {
             try {
-                setIsSavingTemplate(true);
+                // Create FormData to handle file upload
+                const formData = new FormData();
+                
+                // Add all template settings as JSON string
+                const settingsWithoutMedia = { ...templateSettings };
+                if (settingsWithoutMedia.media) {
+                    delete settingsWithoutMedia.media;
+                }
+                formData.append('settings', JSON.stringify(settingsWithoutMedia));
+                
+                // Add the file if it exists
+                if (templateSettings.media instanceof File) {
+                    formData.append('media', templateSettings.media);
+                }
+
                 const response = await fetch(
-                    `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/upload-templates/`, 
+                    `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/upload-templates/`,
                     {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
                             'X-CSRFToken': csrftoken,
                         },
-                        body: JSON.stringify(templateSettings),
+                        body: formData,
                         credentials: 'include',
                     }
                 );
-                
 
                 const responseData = await response.json();
-                
 
                 if (responseData.error) {
-                    setIsSavingTemplate(false)
+                    setIsSavingTemplate(false);
                     showToast(responseData.error.message, 'error');
-
                 } else {
-                    setIsSavingTemplate(false)
+                    setIsSavingTemplate(false);
                     showToast("Template saved successfully", 'success');
-                    console.log(responseData.data)
                     window.location.href = `/${userParamId}/templates`;
                 }
             } catch (error) {
                 console.error('Error:', error);
-                setIsSavingTemplate(false)
-                showToast("Error: Something went wrong while saving template", 'error');
-            } finally {
                 setIsSavingTemplate(false);
+                showToast("Error: Something went wrong while saving template", 'error');
             }
         }
     } catch (error) {
         console.error('Error:', error);
         showToast("Error: Something went wrong while saving template", 'error');
+        setIsSavingTemplate(false);
+    } finally {
         setIsSavingTemplate(false);
     }
 };
@@ -164,6 +191,7 @@ export default function TemplateCreator() {
 
   return (
     <div className="flex min-h-screen w-full bg-background">
+      <UploadDialog text={"Saving template"} percentLoaded={percentLoaded} isFileUploading={isSavingTemplate}/>
       <ToastContainer />
       <aside className="flex h-full w-14 flex-col border-r sm:w-60">
         <div className="flex h-14 items-center justify-center border-b px-4 sm:justify-start">
@@ -184,6 +212,7 @@ export default function TemplateCreator() {
               handleSettingChange={handleSettingChange}
               saveTemplate={saveTemplate}
               isSavingTemplate={isSavingTemplate}
+              setMediaStuff={setMediaStuff}
               className="w-full lg:w-1/2"
             />
             <TemplatePreview
