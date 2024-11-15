@@ -7,6 +7,8 @@ from core.views.views_template import delete_template, UploadTemplatesView, get_
 from core.views.views_csrf import csrf_token_view
 from django.views.decorators.csrf import get_token, csrf_exempt
 from core.views.views_videos import get_videos_by_id, delete_video_by_id, change_video_upload_time, edit_scheduled_video, filter_videos_by_platforms, upload_video
+from core.views.views_settings import get_settings, save_settings
+
 
 urlpatterns = [  
     path('signup/', SignupView.as_view(), name='signup'),  
@@ -28,4 +30,6 @@ urlpatterns = [
     path('change-video-upload-time/<uuid:pk>/', change_video_upload_time, name="change_video_upload_time"),
     path('edit-scheduled-video/<uuid:pk>/', edit_scheduled_video, name="edit_scheduled_video"),
     path('videos-by-platforms/<uuid:pk>/', filter_videos_by_platforms, name="filter_videos_by_platforms"),
+    path('get-user-settings/<uuid:pk>/', get_settings, name="get_settings"),
+    path('save-user-settings/<uuid:pk>/', save_settings, name="save_settings"),
 ]
