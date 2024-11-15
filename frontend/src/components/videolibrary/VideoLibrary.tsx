@@ -1,29 +1,63 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { VideoIcon, Search, Trash2, Clock, Calendar } from "lucide-react";
+import {
+  VideoIcon,
+  Search,
+  Trash2,
+  Clock,
+  Calendar,
+  Download,
+} from "lucide-react";
 import DashNavbar from "@/components/hero/DashNavbar";
 import Sidebar from "@/components/hero/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { format } from "date-fns";
-import {useParams, useNavigate} from 'react-router-dom'
+import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/customs/Toast";
 import LoadingSpinner from "@/components/customs/LoadingSpinner";
+import { getCsrfToken } from "@/lib/funcs";
 
 // Mock data for videos
 const mockVideos = [
-  { id: 1, title: "Funny Cat Video", status: "uploaded", uploadDate: "2024-08-15" },
-  { id: 2, title: "Cooking Tutorial", status: "pending", uploadDate: "2024-08-16" },
+  {
+    id: 1,
+    title: "Funny Cat Video",
+    status: "uploaded",
+    uploadDate: "2024-08-15",
+  },
+  {
+    id: 2,
+    title: "Cooking Tutorial",
+    status: "pending",
+    uploadDate: "2024-08-16",
+  },
   { id: 3, title: "Travel Vlog", status: "uploaded", uploadDate: "2024-08-17" },
   { id: 4, title: "Tech Review", status: "failed", uploadDate: "2024-08-18" },
   // Add more mock videos as needed
 ];
-
 
 export default function VideoLibrary() {
   const [isLoading, setIsLoading] = useState(false);
@@ -43,21 +77,25 @@ export default function VideoLibrary() {
     try {
       setIsLoading(true);
       if (id === null) {
-        return navigate('/login');
+        return navigate("/login");
       }
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_SERVER_URL}/api/get-videos/${id}/`, {
-        method: "GET",
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/get-videos/${id}/`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
       const data = await response.json(); // Ensure we parse the JSON response
       if (!response.ok) {
-        showToast(data.error.message || "Failed to fetch videos", 'error');
+        showToast(data.error.message || "Failed to fetch videos", "error");
       } else {
-        setFetchedVideos(data); // Update fetchedVideos state
-        setSelectedVideo(data); // Set selectedVideo state to the fetched videos
+        console.log(data);
+        setFetchedVideos(data.data); // Update fetchedVideos state
+        setSelectedVideo(data.data); // Set selectedVideo state to the fetched videos
       }
     } catch (err) {
-      showToast("Something went wrong while getting your videos", 'error');
+      showToast("Something went wrong while getting your videos", "error");
     } finally {
       setIsLoading(false);
     }
@@ -67,24 +105,55 @@ export default function VideoLibrary() {
     fetchAllVideos();
   }, [id]);
 
-  const filteredVideos = selectedVideo && Array.isArray(selectedVideo) ? selectedVideo.filter(video =>
-    video.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (statusFilter === "all" || video.upload_status === statusFilter)
-  ) : []; // Ensure filteredVideos is always an array
+  const filteredVideos =
+    selectedVideo && Array.isArray(selectedVideo)
+      ? selectedVideo.filter(
+          (video) =>
+            video.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            (statusFilter === "all" || video.upload_status === statusFilter)
+        )
+      : []; // Ensure filteredVideos is always an array
 
-  const handleDelete = (video) => {
-    // Implement delete logic here
-    console.log(`Deleting video: ${video.title}`);
+  const handleDelete = async (video: any) => {
+    try {
+      const csrftoken = await getCsrfToken();
+
+      const { data, error } = await fetch(
+        `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/delete-video-by-id/${video.id}/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
+          },
+          method: "DELETE",
+          credentials: "include"
+        }
+      );
+      if (error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("Video has been deleted");
+      }
+    } catch (error) {
+      setIsDeleteDialogOpen(false);
+      console.log(error);
+      showToast("Something went wrong while getting your videos", "error");
+    }
+    console.log(`Deleting video: ${video.id}`);
     setIsDeleteDialogOpen(false);
   };
 
   const handleChangeUploadTime = () => {
     const newDateTime = new Date(selectedDate);
-    const [hours, minutes] = selectedTime.split(':');
+    const [hours, minutes] = selectedTime.split(":");
     newDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10));
 
     // Implement change upload time logic here
-    console.log(`Changing upload time for ${selectedVideo.title} to ${newDateTime.toISOString()}`);
+    console.log(
+      `Changing upload time for ${
+        selectedVideo.title
+      } to ${newDateTime.toISOString()}`
+    );
     setIsChangeTimeDialogOpen(false);
   };
 
@@ -101,8 +170,11 @@ export default function VideoLibrary() {
       </aside>
       <div className="flex flex-1 flex-col">
         <DashNavbar />
-        {isLoading ? <LoadingSpinner /> : (
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : (
           <>
+            <ToastContainer />
             <main className="flex-1 overflow-auto p-4 sm:p-6">
               <h1 className="text-3xl font-bold mb-6">Video Library</h1>
 
@@ -134,29 +206,61 @@ export default function VideoLibrary() {
                 {filteredVideos.map((video) => (
                   <Card key={video.id}>
                     <CardContent className="p-4">
-                      <div className="aspect-video bg-gray-200 mb-2 rounded"></div>
+                      <div className="aspect-video bg-gray-200 mb-2 rounded">
+                        <video
+                          className="w-full h-full rounded"
+                          src={video.video_url}
+                          controls
+                          loading="lazy"
+                          controlsList="nodownload"
+                        />
+                      </div>
                       <h3 className="font-semibold mb-1">{video.title}</h3>
-                      <p className="text-sm text-gray-500 mb-2">Upload date: {video.upload_date}</p>
-                      <div className="flex justify-between items-center">
-                        <span className={`text-sm font-medium ${
-                          video.upload_status === 'Uploaded' ? 'text-green-600' :
-                          video.upload_status === 'Pending' ? 'text-yellow-600' :
-                          'text-red-600'
-                        }`}>
-                          {video.upload_status.charAt(0).toUpperCase() + video.upload_status.slice(1)}
+                      <div className="flex justify-between">
+                        <p className="text-sm text-gray-500 mb-2">
+                          Upload date: {video.upload_date}
+                        </p>
+                        <span
+                          className={`text-sm font-medium ${
+                            video.upload_status === "Uploaded"
+                              ? "text-green-600"
+                              : video.upload_status === "Pending"
+                              ? "text-yellow-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {video.upload_status.charAt(0).toUpperCase() +
+                            video.upload_status.slice(1)}
                         </span>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => {
-                            setSelectedVideo(video);
-                            setIsChangeTimeDialogOpen(true);
-                          }}>
-                            <Clock className="h-4 w-4 mr-2" /> Change Time
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => {
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
                             setSelectedVideo(video);
                             setIsDeleteDialogOpen(true);
-                          }}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedVideo(video);
+                              setIsChangeTimeDialogOpen(true);
+                            }}
+                          >
+                            <Clock className="h-4 w-4 mr-2" /> Change Time
+                          </Button>
+                          <Button
+                            variant="solid"
+                            size="sm"
+                            className="bg-blue-600 text-white hover:bg-blue-700"
+                          >
+                            <Download className="h-4 w-4 mr-2" /> Download
                           </Button>
                         </div>
                       </div>
@@ -166,23 +270,37 @@ export default function VideoLibrary() {
               </div>
 
               {filteredVideos.length === 0 && (
-                <p className="text-center text-gray-500 mt-8">No videos found.</p>
+                <p className="text-center text-gray-500 mt-8">
+                  No videos found.
+                </p>
               )}
             </main>
             {/* Change Upload Time Dialog */}
-            <Dialog open={isChangeTimeDialogOpen} onOpenChange={setIsChangeTimeDialogOpen}>
+            <Dialog
+              open={isChangeTimeDialogOpen}
+              onOpenChange={setIsChangeTimeDialogOpen}
+            >
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Change Upload Time</DialogTitle>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Select Date:</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Select Date:
+                    </label>
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
                           <Calendar className="mr-2 h-4 w-4" />
-                          {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                          {selectedDate ? (
+                            format(selectedDate, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -196,7 +314,9 @@ export default function VideoLibrary() {
                     </Popover>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Select Time:</label>
+                    <label className="block text-sm font-medium mb-2">
+                      Select Time:
+                    </label>
                     <Input
                       type="time"
                       value={selectedTime}
@@ -205,24 +325,43 @@ export default function VideoLibrary() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsChangeTimeDialogOpen(false)}>Cancel</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsChangeTimeDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
                   <Button onClick={handleChangeUploadTime}>Confirm</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
 
             {/* Delete Confirmation Dialog */}
-            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <Dialog
+              open={isDeleteDialogOpen}
+              onOpenChange={setIsDeleteDialogOpen}
+            >
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Confirm Deletion</DialogTitle>
                 </DialogHeader>
                 <DialogDescription>
-                  Are you sure you want to delete this video? This action cannot be undone.
+                  Are you sure you want to delete this video? This action cannot
+                  be undone.
                 </DialogDescription>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-                  <Button variant="destructive" onClick={() => handleDelete(selectedVideo)}>Delete</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDeleteDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDelete(selectedVideo)}
+                  >
+                    Delete
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -232,4 +371,3 @@ export default function VideoLibrary() {
     </div>
   );
 }
-

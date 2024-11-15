@@ -6,7 +6,7 @@ from core.views.views_createvideo import create_video
 from core.views.views_template import delete_template, UploadTemplatesView, get_templates_by_id, get_templates
 from core.views.views_csrf import csrf_token_view
 from django.views.decorators.csrf import get_token, csrf_exempt
-from core.views.views_videos import get_all_videos, delete_video, change_video_upload_time, edit_scheduled_video, filter_videos_by_platforms
+from core.views.views_videos import get_videos_by_id, delete_video_by_id, change_video_upload_time, edit_scheduled_video, filter_videos_by_platforms, upload_video
 
 urlpatterns = [  
     path('signup/', SignupView.as_view(), name='signup'),  
@@ -22,8 +22,9 @@ urlpatterns = [
     path('upload-templates/', UploadTemplatesView.as_view(), name='upload_templates'),
     path('create-video/', create_video, name="create_video"),
     path('upload-voice/', upload_voice, name="upload_voice"),
-    path('get-videos/<uuid:pk>/', get_all_videos, name="get_all_videos"),
-    path('delete-video/<uuid:pk>/', delete_video, name="delete_video"),
+    path('get-videos/<uuid:pk>/', get_videos_by_id, name="get_videos_by_id"),
+    path('upload-video/<uuid:pk>/', upload_video, name="upload_video"),
+    path('delete-video-by-id/<uuid:pk>/', delete_video_by_id, name="delete_video_by_id"),
     path('change-video-upload-time/<uuid:pk>/', change_video_upload_time, name="change_video_upload_time"),
     path('edit-scheduled-video/<uuid:pk>/', edit_scheduled_video, name="edit_scheduled_video"),
     path('videos-by-platforms/<uuid:pk>/', filter_videos_by_platforms, name="filter_videos_by_platforms"),

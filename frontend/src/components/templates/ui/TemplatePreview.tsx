@@ -119,7 +119,7 @@ const TemplatePreview = ({ templateSettings }) => {
         setLoadingProgress(100);
       } catch (error) {
         console.error('Error processing media:', error);
-        showToast('Error preparing media preview');
+        showToast('Error preparing media preview', 'error');
       } finally {
         setIsFileUploading(false);
       }

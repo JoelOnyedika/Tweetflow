@@ -18,7 +18,6 @@ class SRTProcessor:
     def create_text_clips(subtitles: List[str], text_config: dict, screen_config: VideoConfig) -> Tuple[List[TextClip], List[AudioClip]]:
         text_clips = []
         audio_clips = []
-        composite_audio = None
 
         config = VideoConfig()
 
@@ -27,9 +26,7 @@ class SRTProcessor:
         for i, subtitle in enumerate(subtitles):
             parts = subtitle.split('\n')
             print(parts)
-            # if len(parts) < 3:
-            #     continue
-
+            
             timing = parts[1].split(' --> ')
             print(timing)
             print('i reached it')
@@ -47,15 +44,16 @@ class SRTProcessor:
             print(text_config)
 
             try:
+                stroke_width = int(text_config['font_size'] * .01)
                 text_clip = TextClip(
                     text,
-                    fontsize=text_config["font_size"] * 3,
+                    fontsize=text_config["font_size"] * 2,
                     color=f"#{text_config['text_color'][0]:02x}{text_config['text_color'][1]:02x}{text_config['text_color'][2]:02x}",
                     font=text_config["font_family"],
                     method='caption',
                     size=(screen_config.screen_width - text_config["left_margin"] - text_config["right_margin"], None),
                     stroke_color=f'#{text_config['text_outline_color'][0]:02x}{text_config['text_outline_color'][1]:02x}{text_config['text_outline_color'][2]:02x}',
-                    stroke_width=2
+                    stroke_width=stroke_width
                 ).set_position(('center', text_config['top_margin'])).set_start(start_time).set_duration(duration)
 
                 text_clips.append(text_clip)
@@ -63,6 +61,7 @@ class SRTProcessor:
                 audio_clip = AudioFileClip(f'{config.temp_audio_dir}/AudioClip-{i}.mp3').set_start(start_time).set_duration(duration)
                 print('fire gg')
                 audio_clips.append(audio_clip)
+                print('appended')
             except Exception as e:
                 print(e)
                 return jsonify({'error': {'message': "Something went wrong while creating subtitles"}})

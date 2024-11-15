@@ -18,6 +18,7 @@ from io import BytesIO
 from PIL import ImageColor, Image, ImageFilter
 from pieces.video_config import VideoConfig
 from typing import Tuple
+import numpy as np
 
 class MediaProcessor:
     def __init__(self, config: VideoConfig, max_workers: int = 10):
@@ -34,7 +35,7 @@ class MediaProcessor:
         url_hash = hashlib.md5(media_url.encode()).hexdigest()
         return f'{self.temp_base}/{url_hash}{file_ext}'
 
-    def join_clips(clip: VideoFileClip):
+    def join_clips(self, clip: VideoFileClip):
         try:
             print(background_clip)
             if background_clip is not None:

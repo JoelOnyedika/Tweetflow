@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 import uuid
 from django.contrib.auth.models import AbstractUser
 from datetime import timedelta, time, date
-
+from django.utils.timezone import now
 
 # Create your models here.
 class CustomUser(AbstractUser):
@@ -46,10 +46,9 @@ class Video(models.Model):
     title = models.CharField(max_length=200)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     tweet_text = models.TextField()
-    upload_date = models.DateField()
-    upload_time = models.TimeField()
+    upload_date = models.DateField(default=date.today)
+    upload_time = models.TimeField(default=now)
     upload_status = models.TextField(default="Pending") #Failed, Uploaded, Pending
-    template = models.ForeignKey(Template, on_delete=models.SET_NULL, null=True)
     video_url = models.URLField(max_length=200)  # URL of the generated video
     created_at = models.DateTimeField(auto_now_add=True)
 

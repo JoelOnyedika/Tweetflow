@@ -1,3 +1,4 @@
+import json
 from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -13,11 +14,57 @@ from core.models import Video, ScheduledVideo
 from django.utils.dateparse import parse_date, parse_time
 from django.utils import timezone
 from datetime import datetime
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 
 logger = logging.getLogger(__name__)
 
 
-def get_all_videos(request, pk):
+
+@csrf_exempt  # If CSRF tokens are required, adjust this as needed
+@login_required  # Ensure the user is authenticated
+def upload_video(request, pk):
+    print(request.body)
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST requests are allowed."}, status=405)
+
+    try:
+        bytes_data = request.body
+        string_data = bytes_data.decode('utf-8')
+
+        data = json.loads(string_data)
+
+        # Create the video
+        create_video = Video.objects.create(
+            title=data.get('title'),
+            user_id=pk,
+            upload_status="Pending", # This will be uploaded when it is set to youtube
+            video_url=data.get('video_url'),
+            tweet_text=data.get('tweet_text')
+        )
+
+        return JsonResponse({"data": "Video uploaded successfully.", "video_id": create_video.id}, status=201)
+
+    except ValidationError as e:
+        logger.error(f"Something went wrong in upload_video validation error {str(e)}")
+        return JsonResponse({"error": {"message":{f"Validation error: {str(e)}"}}}, status=400)
+
+    except IntegrityError as e:
+        logger.error(f"Something went wrong in upload_video integrity error: {str(e)}")
+        return JsonResponse({"error": {"message":{f"Database integrity error: {str(e)}"}}}, status=400)
+
+    except KeyError as e:
+        logger.error(f"Something went wrong in upload_video key error: {str(e)}")
+        return JsonResponse({"error": {"message":{f"Missing key in data: {str(e)}"}}}, status=400)
+
+    except Exception as e:
+        logger.error(f"Something went wrong in upload_video: {str(e)}")
+        return JsonResponse({"error": {"message":{f"An unexpected error occurred: {str(e)}"}}}, status=500)
+
+def get_videos_by_id(request, pk):
 	if request.user.is_authenticated:
 		if request.method == "GET":
 			try:
@@ -32,10 +79,9 @@ def get_all_videos(request, pk):
 				return JsonResponse({'error': {'message':{'Whoops something went wrong while connecting to the server.'}}}, status=500)
 	return JsonResponse({'error': {'message':{'Whoops. You are not authenticated. Please login'}}}, status=500)
 		
-def delete_video(request, pk): # THis is video id
+def delete_video_by_id(request, pk): # THis is video id
 	if request.user.is_authenticated:
 		try:
-			# user_id = request.data.get('id')
 			video = Video.objects.get(id=pk)
 			if video.exists():
 				video.delete()

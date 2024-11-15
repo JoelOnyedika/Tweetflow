@@ -21,9 +21,11 @@ def create_video(request):
             try:
                 the_template = Template.objects.get(id=data['template'])
                 serializer = TemplateSerializer(the_template).data
-                print(serializer)
 
                 serializer['text'] = data['text']
+                serializer['title'] = data['title']
+                serializer['text'] = data['text']
+                serializer['voice_id'] = data['voice']
 
                 if 'user' in serializer:
                     serializer['user'] = str(serializer['user'])
@@ -32,7 +34,7 @@ def create_video(request):
                 result = response.json()
 
                 if 'data' in result:
-                    print(result['data'])
+                    print('testasdf',result['data'])
                     return JsonResponse({'data': result['data']})
                 else:
                     return JsonResponse(result['error'], status=response.status_code)

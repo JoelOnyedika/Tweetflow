@@ -9,6 +9,7 @@ from pieces.helpers import (
     locally_generate_subtitles,
     hex_to_rgb,
 )
+from pieces.upload_handler import Upload
 from moviepy.editor import *
 from typing import List, Tuple, Optional, Union
 import shutil
@@ -19,6 +20,7 @@ class TikTokVideoGenerator:
         self.config = VideoConfig()
         self.media_processor = MediaProcessor(self.config)
         self.srt_processor = SRTProcessor()
+        self.upload_to_storage_bucket = Upload()
 
     def generate(self, data: dict) -> dict:
         try:
@@ -28,24 +30,36 @@ class TikTokVideoGenerator:
             self._setup_environment(data)
             print('processing background_clip')
             try:
+                return_data = {
+                    'video_url': None,
+                    'title': None,
+                    'tweet_text': None,
+                    'user_id': None,
+                }
                 background_clip = self._process_background(data)
                 print('processing text and audio')
                 text_clips, audio_clips = self._process_text_and_audio(data)
-                print(text_clips, audio_clips)
                 print('composing video')
-                final_clip = self._compose_final_video(background_clip, text_clips, audio_clips)
-                self._cleanup()
+                final_clip = self._compose_final_video(background_clip, text_clips, audio_clips, data)
+                if final_clip:
+                    print('final_clip', final_clip)
+                    self._cleanup()
+                    print(data)
+                    return_data['video_url'] = final_clip
+                    return_data['title'] = data['title']
+                    return_data['tweet_text'] = data['text']
+                    return_data['user_id'] = data['user']
+                    return jsonify({'data': return_data})
             except Exception as e:
                 print(e)
                 return jsonify({'error': {'message': 'Something went horribly wrong.'}})
-
-            return jsonify({'data': {'message': 'Process Completed'}})
-
         except Exception as e:
             return jsonify({'error': {'message': str(e)}})
 
     def _validate_input(self, data: dict) -> bool:
+        print('validated')
         return 'text' in data and isinstance(data['text'], str)
+
 
     def _setup_environment(self, data: dict) -> None:
         IMAGEMAGICK_BINARY = r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
@@ -54,8 +68,8 @@ class TikTokVideoGenerator:
             "IMAGEMAGICK_BINARY": IMAGEMAGICK_BINARY, 
             # 'FFMPEG_BINARY': FFMPEG_BINARY
             })
-        if os.path.exists(self.config.output_filename):
-            os.remove(self.config.output_filename)
+        # if os.path.exists(self.config.output_filename):
+        #     os.remove(self.config.output_filename)
 
     def _process_background(self, data: dict) -> Union[VideoClip, ImageClip, ColorClip]:
         if data['media'] is not None and data['media'] != 'None':
@@ -81,6 +95,7 @@ class TikTokVideoGenerator:
 
         try:
             text_config = {
+                "title": data['title'],
                 "font_size": data["font_size"],
                 "top_margin": data["top_margin"],
                 "text_color": hex_to_rgb(data["text_color"]),
@@ -102,7 +117,8 @@ class TikTokVideoGenerator:
         self,
         background_clip: Union[VideoClip, ImageClip, ColorClip],
         text_clips: List[TextClip],
-        audio_clips: List[AudioClip]
+        audio_clips: List[AudioClip],
+        data: dict,
     ) -> None:
         print('composing final clip')
         try:
@@ -114,13 +130,21 @@ class TikTokVideoGenerator:
             final_clip = final_clip.set_audio(composite_audio)
             final_clip = final_clip.subclip(0, composite_audio.duration)
             print('now writing')
+            if not os.path.exists(self.config.output_path):
+                os.makedirs(self.config.output_path)
+            write_path = f'{self.config.output_path}/{data['title']}.mp4'
+
             final_clip.write_videofile(
-                self.config.output_filename,
+                write_path,
                 codec='libx264',
                 fps=24,
                 threads=4,
                 preset='veryfast'
             )
+            final_clip.close()
+            composite_audio.close()
+            
+            return self.upload_to_storage_bucket.upload_media(data['user'], write_path, data['title'])
         except Exception as e:
             print(e)
             return jsonify({'error': {'message': 'Something went wrong while composing video'}})

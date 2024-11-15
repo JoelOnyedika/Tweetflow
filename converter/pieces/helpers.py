@@ -8,79 +8,79 @@ import os
 import shutil
 from pydub import AudioSegment
 import uuid
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import shutil
 
-def split_text_into_segments(text, max_words=3):
+def split_text_into_segments(text, max_words=5):
     """Split text into segments with a maximum number of words."""
     words = text.split()
     segments = [' '.join(words[i:i + max_words]) for i in range(0, len(words), max_words)]
     print(segments)
     return segments
-
-def split_audio_into_segments(segment: list[str], audio_path: str):
-    increment = 0
-    audio_segments = []
+    
+def split_audio_into_segments(segments: List[str], audio_path: str) -> List[AudioFileClip]:
+    """Modified to generate one audio file first, then split it properly"""
+    # Generate one continuous audio file
     if not os.path.exists(audio_path):
         os.makedirs(audio_path)
     else:
         shutil.rmtree(audio_path)
         os.makedirs(audio_path)
 
-    for text in segment:
-        path = audio_path + f'/AudioClip-{increment}.mp3'
-        file = generate_audio(text, path)
-        if file:
-            print(f'saved auvdio {increment}, {path}', file)
-            audio_file = AudioFileClip(path)
-            increment += 1
-            audio_segments.append(audio_file)
-            print('ll')
-    return audio_segments
+    full_audio_path = os.path.join(audio_path, 'full_audio.mp3')
+    full_text = ' '.join(segments)
+    generate_audio(full_text, full_audio_path)
     
+    full_audio = AudioFileClip(full_audio_path)
+    total_duration = full_audio.duration
+    segment_duration = total_duration / len(segments)
+    
+    audio_segments = []
+    for i, text in enumerate(segments):
+        # Create segment with proper timing
+        start_time = i * segment_duration
+        segment_path = os.path.join(audio_path, f'AudioClip-{i}.mp3')
+        
+        # Extract segment from full audio
+        segment_audio = full_audio.subclip(start_time, start_time + segment_duration)
+        segment_audio.write_audiofile(segment_path)
+        
+        audio_segments.append(AudioFileClip(segment_path))
+        print(f'saved audio {i}, {segment_path}')
+    
+    return audio_segments
 
 def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
-# def resize_frame(frame, target_size):
-#     try:
-#         img = Image.fromarray(frame)
-#         img.thumbnail(target_size, Image.LANCZOS)
-#         new_img = Image.new("RGB", target_size, (0, 0, 0))
-#         new_img.paste(img, ((target_size[0] - img.size[0]) // 2, (target_size[1] - img.size[1]) // 2))
-#         print('resized')
-#         return np.array(new_img)
-#     except Exception as e:
-#         print(e)
-
 def adjust_audio(video_path: str, temp_audio_path: str):
     try:
         video_clip = VideoFileClip(video_path)
+        print(video_path, video_clip)
         audio = video_clip.audio
-        id = uuid.uuid4()
-        audio_path = f'{temp_audio_path}/audio_{id}.wav'
-        print('Writing video audio')
-        
-        if not os.path.exists(temp_audio_path):
-            os.makedirs(temp_audio_path)
-        
-        audio.write_audiofile(audio_path)
-        audio_segment = AudioSegment.from_file(audio_path)
-        
-        target_dBFS = -14
-        dB_difference = target_dBFS - audio_segment.dBFS
-        adjustment_factor = 10 ** (dB_difference / 20)
-        
-        # Create a copy before modifying to avoid NoneType error
-        video_clip.volumex(adjustment_factor)
-        print('Adjusted video audio')
-        
-        # Clean up temp file
-        # if os.path.exists(audio_path):
-        #     os.remove(audio_path)
+        if audio is not None:
+            id = uuid.uuid4()
+            audio_path = f'{temp_audio_path}/audio_{id}.wav'
+            print('Writing video audio', audio_path)
             
-        return video_clip
+            if not os.path.exists(temp_audio_path):
+                os.makedirs(temp_audio_path)
+            
+            audio.write_audiofile(audio_path)
+            audio_segment = AudioSegment.from_file(audio_path)
+            
+            target_dBFS = -14
+            dB_difference = target_dBFS - audio_segment.dBFS
+            adjustment_factor = 10 ** (dB_difference / 20)
+            
+            # Create a copy before modifying to avoid NoneType error
+            video_clip.volumex(adjustment_factor)
+            print('Adjusted video audio')
+                
+            return video_clip
+        else:
+            return video_clip
         
     except Exception as e:
         print(f'Error processing video: {e}')

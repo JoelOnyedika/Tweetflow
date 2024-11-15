@@ -2,10 +2,17 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pieces.voice_handler import get_models
 from pieces.tiktok_video_gen import TikTokVideoGenerator
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
+load_dotenv()
 
 CORS(app)
+
+app.config['B2_APPLICATION_KEY_ID'] = os.getenv('B2_APPLICATION_KEY_ID')
+app.config['B2_APPLICATION_KEY'] = os.getenv('B2_APPLICATION_KEY')
+app.config['B2_BUCKET_NAME'] = os.getenv('B2_BUCKET_NAME')
 
 @app.route('/api/voice-models', methods=['GET'])
 def get_voice_models():

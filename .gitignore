@@ -132,3 +132,12 @@ dist
 # Ignore SSL certificates
 localhost.pem
 localhost-key.pem
+
+# Ignore animation test
+legacy.py
+
+# Ignore temp folders
+/temp_audio
+/temp_video
+hello_world.mp4
+output.mp4

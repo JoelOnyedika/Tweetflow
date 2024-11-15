@@ -155,8 +155,9 @@ const handleMediaUpload = async (e) => {
                 <SelectValue>{templateSettings.fontFamily}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Arial">Arial</SelectItem>
-                <SelectItem value="Courier">Courier</SelectItem>
+                <SelectItem value="Arial-Bold">Arial</SelectItem>
+                <SelectItem value="Courier-Bold">Courier</SelectItem>
+                <SelectItem value="Amiri-Bold">Amiri</SelectItem>
                 <SelectItem value="Times New Roman">Times New Roman</SelectItem>
               </SelectContent>
             </Select>
