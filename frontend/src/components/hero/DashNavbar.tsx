@@ -9,10 +9,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
 import { getCookie, getCsrfToken } from "@/lib/funcs";
 import { useToast } from "../customs/Toast";
+import { useNavigate } from "react-router-dom";
 
 const DashNavbar = () => {
   const { showToast, ToastContainer } = useToast();
   const [credits, setCredits] = useState("NaN");
+
+  const navigate = useNavigate();
 
   const fetchCredits = async (userId) => {
     const csrfToken = await getCsrfToken();
@@ -33,6 +36,7 @@ const DashNavbar = () => {
         "Something went wrong while getting your credits. Please refresh",
         "error"
       );
+      return navigate("/login");
     }
     const { data, error } = await response.json();
     if (error) {
@@ -42,7 +46,7 @@ const DashNavbar = () => {
     }
   };
   useEffect(() => {
-    const userId = getCookie('user_id')
+    const userId = getCookie("user_id");
     fetchCredits(userId);
   }, []);
   return (

@@ -80,18 +80,16 @@ def get_videos_by_id(request, pk):
 	return JsonResponse({'error': {'message':{'Whoops. You are not authenticated. Please login'}}}, status=500)
 		
 def delete_video_by_id(request, pk): # THis is video id
-	if request.user.is_authenticated:
-		try:
-			video = Video.objects.get(id=pk)
-			if video.exists():
-				video.delete()
-				return JsonResponse({'data': 'deleted'})
-			else:
-				return JsonResponse({'error': {'message': "This video does not exist anymore."}})
-		except Exception as e:
-			logger.error(f"Error deleting videos", str(e))
-			return JsonResponse({'error': {'message':{'Whoops something went wrong while connecting to the server.'}}}, status=500)
-	return JsonResponse({'error': {'message':{'Whoops. You are not authenticated. Please login'}}}, status=500)
+    try:
+        if request.user.is_authenticated:
+            video = Video.objects.get(id=pk)		
+            video.delete()
+            return JsonResponse({'data': True})
+        else:
+	        return JsonResponse({'error': {'message':{'Whoops. You are not authenticated. Please login'}}}, status=500) 
+    except Exception as e:
+        logger.error(f"Error deleting videos", str(e))
+        return JsonResponse({'error': {'message':{'Whoops something went wrong while connecting to the server.'}}}, status=500)
 
 
 

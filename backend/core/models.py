@@ -19,6 +19,16 @@ class CustomUser(AbstractUser):
             self.end_date = self.start_date + timedelta(days=duration_days)
             self.save()
 
+
+class UserSettings(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    platform = models.CharField(max_length=30, default="youtube")
+    interval = models.CharField(max_length=30, default="weekly")
+    recieve_emails = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+
 class Template(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

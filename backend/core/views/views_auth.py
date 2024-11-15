@@ -99,9 +99,13 @@ class SignupView(APIView):
                     template1 = Template.objects.create(user=user_instance, template_name="Template 1", media="/")
                     template2 = Template.objects.create(user=user_instance, template_name="Template 2", media="/")
                     template3 = Template.objects.create(user=user_instance, template_name="Template 3", media="/")
-
+                    
+                    # Default voice
                     user_instance.voices_id.append('JBFqnCBsd6RMkjVDRZzb')
                     user_instance.save()
+
+                    # Default Auto Upload
+                    
 
                     # Authenticate and log the user in after signup to create a session
                     user = authenticate(username=user.username, password=request.data['password'])

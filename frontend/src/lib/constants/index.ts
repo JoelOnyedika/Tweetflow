@@ -1,5 +1,16 @@
 // Icons from Lucide React
-import { Video, LayoutDashboard, Plus, Mic, Calendar, LayoutTemplate, Plug, Plane, Settings, LogOut } from "lucide-react";
+import {
+  Video,
+  LayoutDashboard,
+  Plus,
+  Mic,
+  Calendar,
+  LayoutTemplate,
+  Plug,
+  Plane,
+  Settings,
+  LogOut,
+} from "lucide-react";
 
 // Sidebar Links Constant
 export const sidebarLinks = [
@@ -13,11 +24,14 @@ export const sidebarLinks = [
   { href: "/voicestore", icon: Mic, label: "Voice Store" },
   { href: "/autopilot", icon: Plane, label: "Auto Pilot" },
   { href: "/settings", icon: Settings, label: "Settings" },
-  { href: "#", icon: LogOut, label: "Logout" }
+  { href: "#", icon: LogOut, label: "Logout" },
 ];
 
-export const creditSystem = {createTemplate: 5, createVideo: 10}
-
+export const creditSystem = {
+  createTemplate: 5,
+  createVideo: 10,
+  downloadVideo: 5,
+};
 
 export const integrations = [
   {
@@ -51,15 +65,18 @@ export const integrations = [
 ];
 
 export const UPLOAD_PLATFORMS = [
-  { id: 'tiktok', name: 'TikTok' },
-  { id: 'youtube', name: 'YouTube Shorts' },
-  { id: 'instagram', name: 'Instagram Reels' },
+  { id: "all", name: "All" },
+  { id: "randomize", name: "Randomize" },
+  { id: "tiktok", name: "TikTok" },
+  { id: "youtube", name: "YouTube Shorts" },
+  { id: "instagram", name: "Instagram Reels" },
 ];
 
 export const UPLOAD_INTERVALS = [
-  { id: 'hourly', name: 'Every Hour' },
-  { id: 'daily', name: 'Daily' },
-  { id: 'weekly', name: 'Weekly' },
+  { id: "hourly", name: "Every Hour" },
+  { id: "half-a-day", name: "Every 12 Hours" },
+  { id: "daily", name: "Daily" },
+  { id: "weekly", name: "Weekly" },
 ];
 
 export const voiceModels = [
@@ -71,12 +88,12 @@ export const voiceModels = [
   { id: 6, name: "David", type: "Standard", price: null, inPlan: true },
   { id: 7, name: "Olivia", type: "Premium", price: 12.99, inPlan: false },
   { id: 8, name: "Daniel", type: "Custom", price: 34.99, inPlan: false },
-]
+];
 
 export const planTiers = [
-  {tier: 0, plan: 'free'},
-  {tier: 1, plan: 'basic', price: 5},
-  {tier: 2, plan: 'moderate', price: 4.50},
-  {tier: 3, plan: 'standard', price: 4},
-  {tier: 4, plan: 'premuim', price: 3},
-]
+  { tier: 0, plan: "free" },
+  { tier: 1, plan: "basic", price: 5 },
+  { tier: 2, plan: "moderate", price: 4.5 },
+  { tier: 3, plan: "standard", price: 4 },
+  { tier: 4, plan: "premuim", price: 3 },
+];
