@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from core.models import CustomUser, Template
+from core.models import CustomUser, Template, UserSettings
 from django.contrib.auth import authenticate, login
 from core.serializers import *
 import logging
@@ -105,7 +105,8 @@ class SignupView(APIView):
                     user_instance.save()
 
                     # Default Auto Upload
-                    
+                    default_user_settings = UserSettings.objects.create(user=user_instance)
+                    default_user_settings.save()
 
                     # Authenticate and log the user in after signup to create a session
                     user = authenticate(username=user.username, password=request.data['password'])
