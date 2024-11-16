@@ -36,7 +36,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/customs/Toast";
 import LoadingSpinner from "@/components/customs/LoadingSpinner";
@@ -55,7 +55,8 @@ export default function VideoLibrary() {
   const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isDownloadingVideo, setIsDownloadingVideo] = useState(false);
-  const [selectedTime, setSelectedTime] = useState("12:00");
+  const [selectedTime, setSelectedTime] = useState();
+  const [savingSchedule, setSavingSchedule] = useState(false);
   const { id } = useParams();
   const { showToast, ToastContainer } = useToast();
   const navigate = useNavigate();
@@ -79,6 +80,38 @@ export default function VideoLibrary() {
       } else {
         setFetchedVideos(data.data); // Update fetchedVideos state
         setSelectedVideo(data.data); // Set selectedVideo state to the fetched videos
+
+        if (data.data.upload_date) {
+          const parsedDate = parse(
+            data.data.upload_date,
+            "yyyy-MM-dd",
+            new Date()
+          );
+          setSelectedDate(parsedDate);
+          console.log("Parsed date:", parsedDate);
+        }
+
+        if (data.upload_time) {
+          // Get just HH:mm:ss part, assuming input is 24-hour format like "16:51:30.233540"
+          const timeWithoutMicros = data.upload_time.split(".")[0];
+
+          // Convert to 12-hour format for display
+          const [hours, minutes, seconds] = timeWithoutMicros.split(":");
+          const hour = parseInt(hours);
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const hour12 = hour % 12 || 12; // Convert 0 to 12 for midnight
+
+          // Format as "HH:mm:ss" with padded zeros
+          const formattedTime = `${hour12
+            .toString()
+            .padStart(2, "0")}:${minutes}:${seconds}`;
+
+          console.log(`Original time: ${data.upload_time}`);
+          console.log(`Formatted for input: ${formattedTime}`);
+          console.log(`AM/PM: ${ampm}`);
+
+          setSelectedTime(formattedTime);
+        }
 
         setFilteredVideos(
           data.data && Array.isArray(data.data)
@@ -104,6 +137,7 @@ export default function VideoLibrary() {
 
   useEffect(() => {
     fetchAllVideos();
+    console.log(selectedTime);
   }, []);
 
   const handleDelete = async (video: any) => {
@@ -137,35 +171,104 @@ export default function VideoLibrary() {
     setIsDeleteDialogOpen(false);
   };
 
-  const handleChangeUploadTime = () => {
-    const newDateTime = new Date(selectedDate);
-    const [hours, minutes] = selectedTime.split(":");
-    newDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-
-    // Implement change upload time logic here
-    console.log(
-      `Changing upload time for ${
-        selectedVideo.title
-      } to ${newDateTime.toISOString()}`
-    );
-    setIsChangeTimeDialogOpen(false);
+  const extractTitleFromUrl = (url: string) => {
+    const parts = url.split("/"); // Split by '/'
+    const fileName = parts[parts.length - 1]; // Get the last part
+    return fileName; // Return the file name
   };
 
-  const handleDownloadVideo = async (video: any) => {
+  const handleDownloadVideo = async (video: string) => {
     try {
+      // Deduct credits before downloading
       const { error } = await chopUserCredits(id, creditSystem.downloadVideo);
       if (error) {
         showToast(error.message, "error");
+        return;
+      }
+
+      // Start downloading the video
+      setIsDownloadingVideo(true);
+      console.log("Downloading video:", video.video_url);
+
+      // Fetch the video.video_url as a Blob
+      const response = await fetch(video.video_url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch video");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      // Create an anchor element and trigger the download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = extractTitleFromUrl(video.video_url);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Release memory
+      URL.revokeObjectURL(url);
+
+      // Show success toast
+      showToast("Video downloaded successfully!", "success");
+      setIsDownloadingVideo(false);
+    } catch (error: any) {
+      setIsDownloadingVideo(false);
+      console.error("Error downloading the video:", error);
+      showToast(
+        "Something went wrong while downloading the video. Please refresh.",
+        "error"
+      );
+    }
+  };
+
+  const updateVideoSchedule = async () => {
+    try {
+      setSavingSchedule(true);
+      if (!selectedDate || !selectedTime) {
+        showToast("Please select both date and time");
+        return;
+      }
+
+      const csrftoken = await getCsrfToken();
+
+      // Format the date and time
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      const formattedTime = `${selectedTime}.000000`;
+
+      console.log(selectedVideo);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/update-video-schedule/${
+          selectedVideo.id
+        }/`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
+          },
+          body: JSON.stringify({
+            date: formattedDate,
+            time: formattedTime,
+          }),
+        }
+      );
+
+      const { data, error } = await response.json();
+      if (error) {
+        showToast(error.message, "error");
+        setSavingSchedule(false);
       } else {
-        setIsDownloadingVideo(true);
-        console.log("Download video", video);
+        showToast("Video has been re-scheduled");
+        setSavingSchedule(false);
       }
     } catch (error) {
-      setIsDownloadingVideo(false);
-      console.log(error);
-      showToast(
-        "Something went wrong while downloading video. Please refresh."
-      );
+      console.error("Error updating schedule:", error);
+      showToast("Failed to update your video schedule", "error");
+      setSavingSchedule(false);
     }
   };
 
@@ -347,6 +450,7 @@ export default function VideoLibrary() {
                       type="time"
                       value={selectedTime}
                       onChange={(e) => setSelectedTime(e.target.value)}
+                      step="1"
                     />
                   </div>
                 </div>
@@ -357,7 +461,16 @@ export default function VideoLibrary() {
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleChangeUploadTime}>Confirm</Button>
+                  <Button onClick={updateVideoSchedule}>
+                    {savingSchedule ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Confirm"
+                    )}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

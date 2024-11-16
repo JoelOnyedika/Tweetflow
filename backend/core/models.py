@@ -7,7 +7,7 @@ from django.utils.timezone import now
 
 # Create your models here.
 class CustomUser(AbstractUser):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     plan = models.CharField(max_length=20, choices=[('free', 'Free'), ('starter', 'Starter'), ('enterprise', 'Enterprise')], default='free')
     start_date = models.DateTimeField(auto_now_add=True)
     credits = models.IntegerField(default=30)
@@ -19,6 +19,9 @@ class CustomUser(AbstractUser):
             self.end_date = self.start_date + timedelta(days=duration_days)
             self.save()
 
+    def __str__(self):
+        return str(self.id)
+
 
 class UserSettings(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
@@ -28,6 +31,10 @@ class UserSettings(models.Model):
     recieve_emails = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user'], name='unique_user_settings')
+        ]
 
 class Template(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)

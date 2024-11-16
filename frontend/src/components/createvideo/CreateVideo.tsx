@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { VideoIcon } from "lucide-react";
+import { VideoIcon, WandSparkles } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -70,7 +70,7 @@ export default function CreateVideo() {
     defaultValues: {
       text: "A codebase without tests is a codebase designed to fail",
       title: "Words of wisdom",
-      voiceId: ""
+      voiceId: "",
     },
   });
 
@@ -147,7 +147,6 @@ export default function CreateVideo() {
       showToast("Failed to load templates. Please refresh the page.", "error");
     }
   };
-
 
   const calculateEstimatedTime = (text: string) => {
     const textLen = text.length;
@@ -487,10 +486,16 @@ export default function CreateVideo() {
                       }
                       className="w-full"
                     >
-                      <span className="font-semibold">
-                        {isLoading
-                          ? `Processing... ${progress}%`
-                          : `Create Video: ${creditSystem.createVideo} Credits`}
+                      <span className="font-semibold flex">
+                        {isLoading ? (
+                          `Processing... ${progress}%`
+                        ) : (
+                          <>
+                            {" "}
+                            <WandSparkles className="w-4 h-4 mr-3 mt-1" />{" "}
+                            Create Video: {creditSystem.createVideo} Credits{" "}
+                          </>
+                        )}
                       </span>
                     </Button>
                   </div>
