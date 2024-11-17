@@ -1,86 +1,72 @@
-from moviepy.editor import *
-from moviepy.video.tools.segmenting import findObjects
+import os
+from moviepy.config import change_settings
+
+
+IMAGEMAGICK_BINARY = r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
+FFMPEG_BINARY = r"C:\Users\USER\Desktop\ffmpeg\bin"
+change_settings(
+    {
+        "IMAGEMAGICK_BINARY": IMAGEMAGICK_BINARY,
+        # 'FFMPEG_BINARY': FFMPEG_BINARY
+    }
+)
+
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, AudioFileClip
+from gtts import gTTS
 import numpy as np
+from pydub import AudioSegment
 
-class Animate:
-    def __init__(self):
-        self.screensize = (720, 460)
-        self.txtClip = TextClip(
-            txt="Hello World", 
-            fontsize=70, 
-            color='white',
-            font="Amiri-Bold",
-        )
-        self.cvc = CompositeVideoClip([self.txtClip.set_pos('center')], size=self.screensize)
-        self.rotMatrix = lambda a: np.array([[np.cos(a), np.sin(a)], [-np.sin(a), np.cos(a)]])
-        self.letters = findObjects(self.cvc)
+# Step 1: Create your video or image clips using MoviePy (just a color clip example here)
+clip = VideoFileClip("Saying.mp4")  # This can be an image or video
 
-    def moveLetters(self, letters: any, funcpos: any):
-        return [ letter.set_pos(funcpos(letter.screenpos, i, len(letters))) for i, letter in enumerate(self.letters) ]
+# Step 2: Generate audio with GTTS
+text = "Hello world, welcome to the karaoke effect!"
+tts = gTTS(text)
+tts.save("output.mp3")
 
-    def vortex(self, screenpos: tuple, i: int, nletters: int):
-        damping = lambda time: 1.0/(.3+time**8)
-        angle = i*np.pi*nletters
-        v = self.rotMatrix(angle).dot([-1, 0])
-        if i%2: v[1] = -v[1]
-        return lambda time: screenpos + 400*damping(time) * self.rotMatrix(.5*damping(time)*angle).dot(v)
+# Step 3: Use PyDub to get the timing of words
+audio = AudioSegment.from_mp3("output.mp3")
+audio_length = len(audio)  # Total duration in milliseconds
 
-    def arrive(self, screenpos,i,nletters):
-        v = np.array([-1,0])
-        d = lambda t : max(0, 3-3*t)
-        return lambda t: screenpos-400*v*d(t-0.2*i)
-
-    def werid(self, screenpos, i, nletters):
-        v = np.array([-1, 0]) # this is like a 2d grid v[0] is like left-right v[1] is top-bottom
-        d = lambda t: min(0, 3*t) # min will make the shit go up and max make it fall down and its the speed/frequency
-        return lambda t: screenpos+400*v*d(t-0.2*i)
-
-    def drop_in(self, screenpos, i, nletters):
-        vector = np.array([0, 1]) # Direction vector, up or down
-        damping = lambda time: 1 / (1 + time**2) # speed decreases overtime creating an effect
-        return lambda time: screenpos + 200 * damping(time) * vector # Movement function
-
-    def bouncy(self, screenpos, i, nletters):
-        direction = np.array([0, -1])
-        bounce_height = lambda time: 2 * np.sin(np.pi * time) # This creates an updown effect
-        return lambda time: screenpos + 100 * bounce_height(time) * direction
-
-    def left_to_right(self, screenpos, i, nletters):
-        speed = 10
-        return lambda time: screenpos + np.array([speed * time, 0])
-
-    def typewriter(self, screenpos, i, nletters):
-        delay = 0.4  # Time delay between each letter
-        return lambda t: screenpos if t > i * delay else (-1000, -1000)
-
-    def kill_me(self, screenpos, i, nletters):
-        return lambda t: screenpos[0] + 5 * t, screenpos[1]
+# Example text to display
+words = text.split()
+word_timings = np.linspace(0, audio_length, len(words) + 1).astype(
+    int
+)  # Divide audio into word segments
 
 
+# Step 4: Create TextClips with progressive highlighting
+def create_highlighted_text(word, start_time, end_time):
+    # Create the text clip with a white background and black text
+    txt_clip = TextClip(
+        word,
+        fontsize=50,
+        color="white",
+        font="Arial",
+        bg_color="black",
+        size=(1280, 720),
+        print_cmd=True,
+    )
+    txt_clip = txt_clip.set_start(start_time / 1000).set_end(
+        end_time / 1000
+    )  # Convert ms to seconds
+    return txt_clip
 
-    def create_final_clip(self):
-        clips = [ CompositeVideoClip(self.moveLetters(self.letters, funcpos), 
-                    size=self.screensize).subclip(0, 5) 
-                    for funcpos in [self.kill_me] ]
-        final_clip = concatenate_videoclips(clips)
-        final_clip.write_videofile(
-            "hello_world.mp4",
-            fps=24,
-            codec='libx264',
-            preset='medium'
-        )
 
-anim = Animate()
-anim.create_final_clip()
+# Step 5: Create clips for each word with time-based highlighting
+text_clips = []
+for i, word in enumerate(words):
+    start_time = word_timings[i]
+    end_time = word_timings[i + 1]
+    text_clip = create_highlighted_text(word, start_time, end_time)
+    text_clips.append(text_clip)
 
-"""
-cos(angle) gives the x-coordinate, 
-and sin(angle) gives the y-coordinate, 
-for a point moving in a circular path.
+# Step 6: Combine the video and text clips
+composite = CompositeVideoClip([clip] + text_clips)  # The background clip + text clips
 
-Remember that vector == direction
+# Step 7: Set the final audio to sync with the video and captions
+final_audio = AudioFileClip("output.mp3")
+composite = composite.set_audio(final_audio)
 
-Use sin and cos for oscillations or circular movement.
-Use **** (power) for slowing things down over time.
-Experiment with * or / to scale movement distances or speed.
-"""
+# Step 8: Export the final video
+composite.write_videofile("output_with_karaoke.mp4", codec="libx264", fps=24)

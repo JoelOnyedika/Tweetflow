@@ -3,77 +3,59 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import ColorPicker from "@/components/ui/color-picker";
 import { TIKTOK_HEIGHT } from "./TemplateCreator";
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from "lucide-react";
 import { creditSystem } from "@/lib/constants";
 import { useToast } from "@/components/customs/Toast";
 import UploadDialog from "@/components/customs/UploadDialog";
 
-const TemplateEdit = ({ templateSettings, handleSettingChange, saveTemplate, isSavingTemplate, setMediaStuff }) => {
+const TemplateEdit = ({
+  templateSettings,
+  handleSettingChange,
+  saveTemplate,
+  isSavingTemplate,
+  setMediaStuff,
+}) => {
   const [editableValues, setEditableValues] = useState({
-    ...templateSettings
+    ...templateSettings,
   });
   const { showToast, ToastContainer } = useToast();
-  const [percentLoaded, setPercentLoaded] = useState(0)
-  const [isFileUploading, setIsFileUploading] = useState(false)
+  const [percentLoaded, setPercentLoaded] = useState(0);
+  const [isFileUploading, setIsFileUploading] = useState(false);
 
   useEffect(() => {
-      setEditableValues({
+    setEditableValues({
       ...templateSettings,
       fontSize: templateSettings.fontSize,
       lineHeight: templateSettings.lineHeight,
       marginTop: templateSettings.marginTop,
       marginLeft: templateSettings.marginLeft,
       marginRight: templateSettings.marginRight,
-    })
+    });
+  }, [templateSettings]);
 
-  }, [templateSettings])
+  const handleMediaUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // const handleMediaUpload = async (e) => {
-  //   const file = e.target.files[0];
-  //   if (!file) return;
+    const fileType = file.type.split("/")[0];
+    const validTypes = ["video", "image"];
 
-  //   const fileType = file.type.split('/')[0];
-  //   const validTypes = ['video', 'image'];
-    
-  //   if (!validTypes.includes(fileType)) {
-  //     showToast("Please upload a valid video or image file");
-  //     return;
-  //   }
+    if (!validTypes.includes(fileType)) {
+      showToast("Please upload a valid video or image file");
+      return;
+    }
 
-  //   try {
-  //     // Create object URL for the file
-  //     const objectUrl = URL.createObjectURL(file);
-      
-  //     // Update template settings with the new media
-  //     handleSettingChange("media", {
-  //       type: fileType,
-  //       url: objectUrl,
-  //       originalFile: file
-  //     });
-  //     setMediaStuff({ type: fileType, url: objectUrl, originalFile: file })
-  //   } catch (error) {
-  //     console.error("File processing error:", error);
-  //     showToast("Error processing file. Please try again.");
-  //   }
-  // };
-
-const handleMediaUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  const fileType = file.type.split('/')[0];
-  const validTypes = ['video', 'image'];
-  
-  if (!validTypes.includes(fileType)) {
-    showToast("Please upload a valid video or image file");
-    return;
-  }
-  
-  handleSettingChange("media", file);
-};
+    handleSettingChange("media", file);
+  };
 
   const handleInputChange = (setting, value) => {
     const numValue = parseFloat(value);
@@ -100,26 +82,47 @@ const handleMediaUpload = async (e) => {
     </div>
   );
 
-
   return (
     <Card className="w-full" disabled={isFileUploading}>
-      <UploadDialog text={"Uploading file"} percentLoaded={percentLoaded} isFileUploading={isFileUploading}/>
-    <ToastContainer />
+      <UploadDialog
+        text={"Uploading file"}
+        percentLoaded={percentLoaded}
+        isFileUploading={isFileUploading}
+      />
+      <ToastContainer />
       <CardContent className="p-6 space-y-6">
         <h2 className="text-2xl font-semibold mb-4">Template Settings</h2>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="image-upload" className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded block text-center">
+            <Label
+              htmlFor="image-upload"
+              className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded block text-center"
+            >
               Upload Image
             </Label>
-            <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleMediaUpload} />
+            <Input
+              id="image-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleMediaUpload}
+            />
           </div>
           <div>
-            <Label htmlFor="video-upload" className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded block text-center">
+            <Label
+              htmlFor="video-upload"
+              className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded block text-center"
+            >
               Upload Video
             </Label>
-            <Input id="video-upload" type="file" accept="video/*" className="hidden" onChange={handleMediaUpload} />
+            <Input
+              id="video-upload"
+              type="file"
+              accept="video/*"
+              className="hidden"
+              onChange={handleMediaUpload}
+            />
           </div>
         </div>
 
@@ -129,7 +132,9 @@ const handleMediaUpload = async (e) => {
             <Input
               id="templateName"
               value={templateSettings.templateName}
-              onChange={(e) => handleSettingChange("templateName", e.target.value)}
+              onChange={(e) =>
+                handleSettingChange("templateName", e.target.value)
+              }
               className="w-full"
             />
           </div>
@@ -149,7 +154,9 @@ const handleMediaUpload = async (e) => {
             <Label htmlFor="font-family">Font Family</Label>
             <Select
               value={templateSettings.fontFamily}
-              onValueChange={(value) => handleSettingChange("fontFamily", value)}
+              onValueChange={(value) =>
+                handleSettingChange("fontFamily", value)
+              }
             >
               <SelectTrigger id="font-family">
                 <SelectValue>{templateSettings.fontFamily}</SelectValue>
@@ -172,10 +179,8 @@ const handleMediaUpload = async (e) => {
                 <SelectValue>{templateSettings.textAnim}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="None">None</SelectItem>
-                <SelectItem value="Typewriter">Typewriter Effect</SelectItem>
-                <SelectItem value="Flow">Flow Effect</SelectItem>
-                <SelectItem value="Falling">Falling Effect</SelectItem>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="flow">Flow Effect</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -201,7 +206,9 @@ const handleMediaUpload = async (e) => {
             <Label>Background Color</Label>
             <ColorPicker
               color={templateSettings.backgroundColor}
-              onChange={(color) => handleSettingChange("backgroundColor", color)}
+              onChange={(color) =>
+                handleSettingChange("backgroundColor", color)
+              }
             />
           </div>
           <div>
@@ -213,11 +220,19 @@ const handleMediaUpload = async (e) => {
           </div>
         </div>
 
-        <Button onClick={saveTemplate} disabled={isSavingTemplate} className="w-full font-semibold">{isSavingTemplate ? (<>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Saving template
-        </>) : <span className='font-semibold'>{`Save Template: ${creditSystem.createTemplate} Credits`}</span>
-        }
+        <Button
+          onClick={saveTemplate}
+          disabled={isSavingTemplate}
+          className="w-full font-semibold"
+        >
+          {isSavingTemplate ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving template
+            </>
+          ) : (
+            <span className="font-semibold">{`Save Template: ${creditSystem.createTemplate} Credits`}</span>
+          )}
         </Button>
       </CardContent>
     </Card>
