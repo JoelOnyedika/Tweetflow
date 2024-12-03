@@ -65,3 +65,5 @@ class Upload:
         except Exception as e:
             print(e)
             return jsonify({'error': {'message': "Something went wrong while uploading the file."}}), 500
+
+            
