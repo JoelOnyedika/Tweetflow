@@ -4,7 +4,7 @@ import { VideoMaker } from "./VideoMaker";
 import { useState } from "react";
 // import { data } from "./utils/constants";
 
-export const RemotionRoot: React.FC = () => {
+export const RemotionRoot = () => {
 
   const inputProps = getInputProps();
 

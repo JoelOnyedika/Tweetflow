@@ -5,14 +5,7 @@ import { Media } from "./Components/Media";
 import { KaraokeCaptions } from "./Components/KaraokeCaptions";
 import { RollingTextCaptions } from "./Components/RollingTextCaptions";
 
-export const myCompSchema = z.object({
-  titleText: z.string(),
-  titleColor: zColor(),
-  logoColor1: zColor(),
-  logoColor2: zColor(),
-});
-
-export const VideoMaker: React.FC = ({ data }: any) => {
+export const VideoMaker = ({ data }) => {
   // const lastCaption = data.captions[data.captions.length - 1];
   // durationInFrames(Math.ceil((lastCaption.endMs / 1000) * data.fps));
 

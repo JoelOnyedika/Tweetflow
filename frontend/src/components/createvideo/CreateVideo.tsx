@@ -193,85 +193,91 @@ export default function CreateVideo() {
   }
 
   async function onSubmit(values: any) {
-    console.log(values);
-
+    console.log("Form submitted with values:", values);
+  
     try {
       setIsLoading(true);
+  
       const { data: creditData, error: creditError } = await chopUserCredits(
         id,
         creditSystem.createVideo
       );
-      if (creditData) {
-        const text = values.text || "";
-        const totalDuration = calculateEstimatedTime(text);
-        let timeLeft = totalDuration;
-        let intervalSpeed = 1000; // Initial speed of 1 second interval
-
-        const intervalId = setInterval(() => {
-          timeLeft -= intervalSpeed / 1000;
-          let currentProgress =
-            ((totalDuration - timeLeft) / totalDuration) * 100;
-
-          if (currentProgress >= 95 && currentProgress < 99 && timeLeft > 0) {
-            intervalSpeed = 3000;
-          }
-
-          if (currentProgress >= 99) {
-            currentProgress = 99;
-            setProgress(currentProgress.toFixed(2));
-            return;
-          }
-
-          setProgress(currentProgress.toFixed(2));
-
-          if (timeLeft <= 0) {
-            clearInterval(intervalId);
-            setProgress(100);
-          }
-        }, intervalSpeed);
-
-        const csrftoken = await getCsrfToken();
-
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/create-video/`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": csrftoken,
-            },
-            method: "POST",
-            credentials: "include",
-            body: JSON.stringify(values),
-          }
-        );
-
-        const { data, error } = await response.json();
-
-        clearInterval(intervalId);
-        setProgress(100);
-
-        if (error) {
-          setIsLoading(false);
-          console.log(error);
-          showToast(error.message, "error");
-        } else {
-          console.log(data);
-          setVideoUrl(data.video_url);
-          uploadVideoToDB(data);
-        }
-
+  
+      if (!creditData) {
         setIsLoading(false);
-      } else {
-        setIsLoading(false);
-        showToast(creditError.message, "error");
-        // setProgress(100)
+        showToast(creditError?.message || "Failed to deduct credits.", "error");
+        return;
       }
-    } catch (error) {
-      console.log(error);
+  
+      const text = values.text || "";
+      const totalDuration = calculateEstimatedTime(text);
+      let timeLeft = totalDuration;
+      let intervalSpeed = 1000; // Initial speed of 1 second interval
+  
+      const intervalId = setInterval(() => {
+        timeLeft -= intervalSpeed / 1000;
+        let currentProgress =
+          ((totalDuration - timeLeft) / totalDuration) * 100;
+  
+        if (currentProgress >= 95 && currentProgress < 99 && timeLeft > 0) {
+          intervalSpeed = 3000;
+        }
+  
+        if (currentProgress >= 99) {
+          currentProgress = 99;
+        }
+  
+        setProgress(currentProgress.toFixed(2));
+  
+        if (timeLeft <= 0) {
+          clearInterval(intervalId);
+          setProgress(100);
+        }
+      }, intervalSpeed);
+  
+      const csrftoken = await getCsrfToken();
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_SERVER_URL}/api/create-video/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
+          },
+          method: "POST",
+          credentials: "include",
+          body: JSON.stringify(values),
+        }
+      );
+  
+      clearInterval(intervalId);
+  
+      if (!response.ok) {
+        showToast(`Request failed with status ${response.status}`, "error");
+        setIsLoading(false);
+        return;
+      }
+  
+      const { data, error } = await response.json();
+  
+      if (error) {
+        showToast(error.message || "Failed to create video.", "error");
+        setIsLoading(false);
+        return;
+      }
+  
+      setVideoUrl(data.video_url);
+      uploadVideoToDB(data);
+      showToast("Video created successfully!", "success");
+    } catch (error: any) {
+      console.error(error);
       showToast("Something went wrong. Please refresh.", "error");
+    } finally {
       setIsLoading(false);
     }
   }
+  
+
 
   const handleVoiceChange = (value) => {
     setSelectedVoice(value);

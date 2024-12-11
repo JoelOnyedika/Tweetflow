@@ -1,14 +1,36 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { renderVideo } from "./remotion/videoRenderer";
+import renderVideo from "./remotion/videoRenderer.js";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(helmet());
 
-app.post("/api/create-video", async (req: Request, res: Response) => {
+const allowedOrigins = [`${process.env.BACKEND_SERVER_URL}`];
+const API_KEY = process.env.API_KEY;
+
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (!origin || allowedOrigins.includes(origin))
+//         return callback(null, true);
+//       callback(new Error("Not allowed by CORS"));
+//     },
+//   })
+// );
+
+// app.use((req, res, next) => {
+//   const clientApiKey = req.header("x-api-key");
+//   if (clientApiKey && clientApiKey === API_KEY) {
+//     next();
+//   } else {
+//     res.status(403).json({ error: { message: "Forbidden: Invalid API key" } });
+//   }
+// });
+
+app.post("/api/create-video", async (req, res) => {
   try {
     const videoSettings = req.body;
 

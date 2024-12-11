@@ -2,7 +2,7 @@ import React from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
 import { data } from "../utils/constants";
 
-export const KaraokeCaptions: React.FC = ({ data }) => {
+export const KaraokeCaptions = ({ data }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const currentTimeMs = (frame / fps) * 1000;

@@ -20,7 +20,7 @@ const captions = [
   },
 ];
 
-export const RollingTextCaptions: React.FC = ({ data }) => {
+export const RollingTextCaptions = ({ data }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const currentTimeMs = (frame / fps) * 1000;
@@ -105,7 +105,7 @@ export const RollingTextCaptions: React.FC = ({ data }) => {
 };
 
 // Calculate total video duration based on captions
-export const calculateVideoDuration = (fps: number) => {
+export const calculateVideoDuration = (fps) => {
   const lastCaption = captions[captions.length - 1];
   return Math.ceil((lastCaption.endMs / 1000) * fps);
 };

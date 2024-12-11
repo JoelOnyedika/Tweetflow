@@ -182,9 +182,13 @@ class VideoGenerator:
                 return duration_in_frames["error"]
             serializer["fps"] = self.fps
 
-            # Uncomment this if you plan to use an external video creation service
+            headers = {
+                # "x-api-key": f"{settings.VIDEOMAKER_API_KEY}",
+                "Content-Type": 'application/json'
+            }
+
             response = requests.post(
-                f"{settings.VIDEOMAKER_SERVER_URL}/api/create-video", json=serializer
+                f"{settings.VIDEOMAKER_SERVER_URL}/api/create-video", json=serializer, headers=headers
             )
             result = response.json()
 
@@ -193,7 +197,7 @@ class VideoGenerator:
             else:
                 return JsonResponse(result["error"], status=response.status_code)
 
-            return {"data": serializer}
+            # return {"data": serializer}
 
         except Template.DoesNotExist:
             return {"error": {"message": "Template not found. Please refresh."}}
