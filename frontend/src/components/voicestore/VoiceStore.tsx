@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import DashNavbar from "@/components/hero/DashNavbar";
 import Sidebar from "@/components/hero/Sidebar";
 import { Link } from "react-router-dom";
-import { useToast } from '@/components/customs/toast';
+import { useToast } from '@/components/customs/Toast';
 import { getCookie } from '@/lib/funcs';
 import { planTiers } from '@/lib/constants';
 import LoadingSpinner from "@/components/customs/LoadingSpinner";

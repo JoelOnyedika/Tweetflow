@@ -13,6 +13,7 @@ import Settings from "@/components/settings/Settings";
 import TemplateCreator from "@/components/templates/ui/TemplateCreator";
 import Signup from "@/components/auth/Signup";
 import Login from "@/components/auth/Login";
+import Pricing from "@/components/pricing/Pricing";
 import "./index.css";
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         <Route path="/:id/templates/:templateId" element={<TemplateCreator />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/pricing" element={<Pricing />} />
       </Routes>
     </Router>
   );
