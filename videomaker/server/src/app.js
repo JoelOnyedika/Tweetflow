@@ -6,10 +6,10 @@ import renderVideo from "./remotion/videoRenderer.js";
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(helmet());
+// app.use(helmet());
 
-const allowedOrigins = [`${process.env.BACKEND_SERVER_URL}`];
-const API_KEY = process.env.API_KEY;
+// const allowedOrigins = [`${process.env.BACKEND_SERVER_URL}`];
+// const API_KEY = process.env.API_KEY;
 
 // app.use(
 //   cors({
@@ -29,6 +29,10 @@ const API_KEY = process.env.API_KEY;
 //     res.status(403).json({ error: { message: "Forbidden: Invalid API key" } });
 //   }
 // });
+
+app.get("/api/test", async (req, res) => {
+  res.send("Done")
+})
 
 app.post("/api/create-video", async (req, res) => {
   try {

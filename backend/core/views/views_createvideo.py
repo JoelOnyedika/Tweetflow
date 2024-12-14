@@ -13,6 +13,7 @@ from b2sdk.v2 import InMemoryAccountInfo, B2Api
 import requests
 from django.conf import settings
 import math
+import json
 
 
 logger = logging.getLogger(__name__)
@@ -140,15 +141,9 @@ class VideoGenerator:
             }
 
     def generate_duration_in_frames(self):
-        try:
-            lastCaption = self.captions[len(self.captions) - 1]
-            return math.ceil((lastCaption["endMs"] / 1000) * self.fps)
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            logger.error(f"An error occurred while generating duration in frmes: {e}")
-            return {
-                "error": {"message": "Something went wrong while duration in frames."}
-            }
+        lastCaption = self.captions[len(self.captions) - 1]
+        duration = math.ceil((lastCaption["endMs"] / 1000) * self.fps)
+        return duration
 
     def generate_video_data(self, data: dict):
         try:
@@ -172,25 +167,38 @@ class VideoGenerator:
                 return captions_response
 
             serializer["captions"] = self.captions
-            logger.error(self.captions)
             print(serializer)
 
             duration_in_frames = self.generate_duration_in_frames()
-            if not duration_in_frames["error"]:
-                serializer["duration_in_frames"] = duration_in_frames
-            else:
-                return duration_in_frames["error"]
+            
+            serializer["duration_in_frames"] = duration_in_frames
+            
             serializer["fps"] = self.fps
+
+            try:
+                json_data = json.dumps(serializer)  # Ensure it's serializable
+            except TypeError as e:
+                logger.error(f"Serialization Error: {e}")
+                return JsonResponse({"error": {"message": "Serializer output is not valid JSON."}}, status=400)
 
             headers = {
                 # "x-api-key": f"{settings.VIDEOMAKER_API_KEY}",
                 "Content-Type": 'application/json'
             }
 
-            response = requests.post(
-                f"{settings.VIDEOMAKER_SERVER_URL}/api/create-video", json=serializer, headers=headers
-            )
-            result = response.json()
+            try:
+                # json_data = json.dumps(serializer)
+                response = requests.post(
+                    f"{settings.VIDEOMAKER_SERVER_URL}/api/create-video", 
+                    json=serializer, 
+                    headers=headers
+                )
+                response.raise_for_status()  # Raise an exception for HTTP errors
+                result = response.json()
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Request Error: {e}")
+                print(f"Response content: {e.response.text if e.response else 'No response'}")
+                return JsonResponse({"error": {'message': "Whoops something went wrong while creating your video."}}, status=500)
 
             if "data" in result:
                 return JsonResponse({"data": result["data"]})
@@ -224,10 +232,9 @@ def create_video(request):
 
             print(response)
 
-            if "error" in response:
-                return JsonResponse(response, status=400)
-
-            return JsonResponse(response, status=200)
+            if isinstance(response, JsonResponse):
+                return response
+            return JsonResponse(response, safe=isinstance(response, dict))
 
         return JsonResponse({"error": {"message": "No data provided"}}, status=400)
     except Exception as e:
