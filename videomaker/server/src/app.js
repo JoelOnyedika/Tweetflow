@@ -37,6 +37,7 @@ app.get("/api/test", async (req, res) => {
 app.post("/api/create-video", async (req, res) => {
   try {
     const videoSettings = req.body;
+    console.log(videoSettings)
 
     // Validate video settings
     if (!videoSettings || typeof videoSettings !== "object") {

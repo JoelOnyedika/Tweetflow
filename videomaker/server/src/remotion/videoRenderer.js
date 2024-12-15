@@ -20,7 +20,7 @@ const renderVideo = async ({ videoId, data }) => {
     const remotionProjectRoot = path.resolve('./remotion');
  
     const bundleLocation = await bundle(
-      path.join(remotionProjectRoot, 'src/Root.tsx'),
+      path.join(remotionProjectRoot, 'src/Root.jsx'),
       undefined,
       {
         webpackOverride: (config) => config,
