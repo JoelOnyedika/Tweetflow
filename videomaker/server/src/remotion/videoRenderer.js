@@ -2,14 +2,19 @@ import { bundle } from '@remotion/bundler';
 import { renderMedia, selectComposition } from '@remotion/renderer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-const renderVideo = async ({ videoId, data }) => {
+// Get the directory name of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const renderVideo = async ({ videoId, inputProps }) => {
   // Validate inputs
   if (!videoId) {
     throw new Error('Video ID is required');
   }
-  if (!data) {
-    throw new Error('Video data is required');
+  if (!inputProps) {
+    throw new Error('Video inputProps is required');
   }
 
   try {
@@ -17,19 +22,16 @@ const renderVideo = async ({ videoId, data }) => {
     const outputDir = path.join(process.cwd(), 'generated-videos');
     fs.mkdirSync(outputDir, { recursive: true });
 
-    const remotionProjectRoot = path.resolve('./remotion');
- 
-    const bundleLocation = await bundle(
-      path.join(remotionProjectRoot, 'src/Root.jsx'),
-      undefined,
-      {
-        webpackOverride: (config) => config,
-      }
-    );
+    // Use __dirname to resolve the correct path to the entry point
+    const bundleLocation = await bundle({
+      entryPoint: path.resolve(__dirname, './src/index.js'),
+      webpackOverride: (config) => config,
+    });
 
     const composition = await selectComposition({
       serveUrl: bundleLocation,
       id: 'Videomaker',
+      inputProps,
     });
 
     if (!composition) {
@@ -37,16 +39,16 @@ const renderVideo = async ({ videoId, data }) => {
     }
 
     const outputLocation = path.join(outputDir, `${videoId}.mp4`);
-
+    
     await renderMedia({
       composition,
       serveUrl: bundleLocation,
       outputLocation,
       codec: 'h264',
-      inputProps: {
-        data,
-      },
+      inputProps,
     });
+
+    console.log('render done')
 
     return `/generated-videos/${videoId}.mp4`;
   } catch (error) {

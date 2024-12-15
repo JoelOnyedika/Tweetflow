@@ -370,3 +370,22 @@ Error while creating video: In order to allow non-dict objects to be serialized 
 Internal Server Error: /api/create-video/
 Internal Server Error: /api/get-voice-by-id/061a94a7-f7d3-4f03-8244-2fa1451c1fb3/
 Internal Server Error: /api/get-voice-by-id/061a94a7-f7d3-4f03-8244-2fa1451c1fb3/
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/c624d579-4956-4a97-b760-7a4517dc0f32\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/a5bbf077-a52c-43a5-b397-b373dc52c050\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/d29a6499-1e9c-424c-852a-c362b103cbf3\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/1da19f29-d4b6-46c8-814c-e0870b70d3ff\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/8e710940-675a-4bab-82a6-20cc43475070\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/7c8a0043-e9da-48b6-b572-7e923e08015e\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/ddb6b7b6-d22c-4d43-b2fb-4d9e537380f7\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/cf674663-8966-40b8-aa75-d235cf84a4fd\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/0abba669-d927-428f-a98a-1de930994678\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/054427c3-7e15-4177-b712-22e2781aff9a\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/0c7bb167-2dad-4fee-b53a-7df08a285b30\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/aafdcc4f-3215-4d98-9c58-f14eb501c596\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/21183b65-0d28-4e84-a326-70c6f46c763f\output.mp3
+Request Error: HTTPConnectionPool(host='127.0.0.1', port=5054): Max retries exceeded with url: /api/create-video (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000001528A2F98B0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+Internal Server Error: /api/create-video/
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/db6d38e7-b254-48ea-b8db-cc3aecc24e6b\output.mp3
+Request Error: HTTPConnectionPool(host='127.0.0.1', port=5054): Max retries exceeded with url: /api/create-video (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000015288007AA0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+Internal Server Error: /api/create-video/
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/4828b519-4b8b-4a70-a4dd-d56de7039134\output.mp3

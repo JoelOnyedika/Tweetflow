@@ -50,7 +50,7 @@ app.post("/api/create-video", async (req, res) => {
 
     const videoPath = await renderVideo({
       videoId,
-      data: videoSettings,
+      inputProps: videoSettings,
     });
 
     res.json({ data: { videoPath: videoPath, videoId: videoId } });
