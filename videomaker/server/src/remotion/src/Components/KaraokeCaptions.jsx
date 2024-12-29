@@ -4,7 +4,7 @@ import { data } from "../utils/constants";
 
 export const KaraokeCaptions = ({ data }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width } = useVideoConfig();
   const currentTimeMs = (frame / fps) * 1000;
   const fadeOutOpacity = Math.min(1, frame / 60);
 
@@ -59,7 +59,7 @@ export const KaraokeCaptions = ({ data }) => {
                     color: isColored ? data.textColor : data.textOutline,
                     fontFamily: data.fontFamily,
                     fontWeight: "bold",
-                    fontSize: `${data.fontSize}px`,
+                    fontSize: `${(data.fontSize / 300) * width}px`,
                     marginRight: `${data.marginRight}px`,
                     marginLeft: `${data.marginRight}px`,
                     textShadow: `1px 1px 0 ${data.strokeColor}, 

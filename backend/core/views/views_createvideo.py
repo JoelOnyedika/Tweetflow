@@ -71,7 +71,7 @@ class VideoGenerator:
             logger.error(error_message)
             return {"error": {"message": error_message}}
 
-    def generate_captions(self, max_words=10):
+    def generate_captions(self, max_words=1):
         """
         Generate captions with timestamps for use in tools like Remotion,
         splitting words into groups of max_words.

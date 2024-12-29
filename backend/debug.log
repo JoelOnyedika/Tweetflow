@@ -389,3 +389,18 @@ C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/db6d38e7-b254
 Request Error: HTTPConnectionPool(host='127.0.0.1', port=5054): Max retries exceeded with url: /api/create-video (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000015288007AA0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
 Internal Server Error: /api/create-video/
 C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/4828b519-4b8b-4a70-a4dd-d56de7039134\output.mp3
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/72654e25-e822-4fb1-80ad-327c01de1f75\output.mp3
+An unexpected error occurred: Failed to connect. Probable cause: Unknown
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/ce442bf2-193d-46cc-9ec6-d9adaf45f5a2\output.mp3
+An unexpected error occurred: Failed to connect. Probable cause: Unknown
+An unexpected error occurred: Failed to connect. Probable cause: Unknown
+Internal Server Error: /api/get-voice-by-id/061a94a7-f7d3-4f03-8244-2fa1451c1fb3/
+Internal Server Error: /api/get-voice-by-id/061a94a7-f7d3-4f03-8244-2fa1451c1fb3/
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/7f32552f-76de-437f-baa8-3e45ce7c3c22\output.mp3
+Get ElevenLabs voices error: 'Settings' object has no attribute 'CONVERTER_SERVER_URL'
+Internal Server Error: /api/voice-models/
+C:\Users\USER\Documents\Coding\sidehustles\Tweetflow\backend\media/b96d226a-7810-4c45-97e1-881f2df0d58e\output.mp3
+Request Error: HTTPConnectionPool(host='127.0.0.1', port=5054): Max retries exceeded with url: /api/create-video (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000151A6356F00>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+Internal Server Error: /api/create-video/
+Request Error: HTTPConnectionPool(host='127.0.0.1', port=5054): Max retries exceeded with url: /api/create-video (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000151A62C29C0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))
+Internal Server Error: /api/create-video/
