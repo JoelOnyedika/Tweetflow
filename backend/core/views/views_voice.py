@@ -54,24 +54,58 @@ def determine_plan(voice_id):
         return ['Standard', 2.99]
     return None
 
+def get_models():
+    try:
+        api_key = settings.ELEVENLABS_API_KEY
+        print(api_key)
+        logger.error(api_key)
+        url = "https://api.elevenlabs.io/v1/voices"
+
+        headers = {
+            "Content-Type": "application/json",
+            'xi-api-key': api_key,
+        }
+        
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        data = response.json()
+        voices = data.get('voices', [])
+        
+        voice_data = [
+            {
+                'voice_id': voice['voice_id'],
+                'name': voice['name'],
+                'category': voice.get('category', 'N/A'),
+                'description': voice.get('description', 'N/A'),
+                'preview_url': voice.get('preview_url', 'N/A')
+            }
+            for voice in voices
+        ]
+        
+        print(f"Number of voices: {len(voice_data)}")
+        print(voice_data)
+        return {'data': voice_data, 'error': None}
+    except requests.RequestException as e:
+        print(f"An error occurred while fetching data: {e}")
+        return {'error': {'message': "Something went wrong while getting voices"}, 'data': None}
+    except KeyError as e:
+        print(f"Unexpected data structure: {e}")
+        return {'error': {'message': "Unexpected data structure in API response"}, 'data': None}
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return {'error': {'message': "An unexpected error occurred"}, 'data': None}
+            
+
+
 def get_voice_models(request):
-    """Fetches voice models from the Flask converter API."""
     permission_classes = [IsAuthenticated]
     try:
         if request.user.is_authenticated:
-            headers = {
-                'Content-Type': 'application/json'
-            }
-
-            # Use the correct syntax for credentials, if needed.
-            response = requests.get(
-                f'{settings.CONVERTER_SERVER_URL}/api/voice-models', 
-                headers=headers
-            )
-            
-            result = response.json()
+            result = get_models()
 
             print('result', result['error'])
+            logger.error(result)
 
             if not result.get('error'):
                 try:
@@ -119,59 +153,62 @@ def get_voice_models(request):
         return JsonResponse({"error": {"message": "Something went wrong..."}}, status=500)
 
 
-# def get_voice_models(request):
-#     permission_classes = [IsAuthenticated]
-#     try:
-#         if request.user.is_authenticated:
-#             voices = VoiceTier.objects.all()
-
-#             serializer = VoiceTierSerializer(voices, many=True).data
-#             if serializer is None:
-#                 return JsonResponse({ 'error': {'message': "Could not find the voices in the voice store"} }, status=404)
-#             else:
-#                 return JsonResponse({ 'data': serializer }, status=200)
-
-#         return JsonResponse({'error': {'message': 'You are not authenticated. Please login'}}, status=401)
-
-#     except Exception as e:
-#         logger.error(f"Get VoiceTier voices error: {str(e)}")
-#         return JsonResponse({"error": {"message": "Something went wrong..."}}, status=500)
-
-
 
 def get_voice_models_by_id(request, pk):
-    permission_classes = [IsAuthenticated]    
+    permission_classes = [IsAuthenticated]
     try:
         if request.user.is_authenticated:
-            user = CustomUser.objects.get(id=pk)        
-            voice_ids = user.voices_id  
-            print(voice_ids)
-            voice_data_list = []            
+            user = CustomUser.objects.get(id=pk)
+            voice_ids = user.voices_id
+
+            print(f"Voice IDs for user {pk}: {voice_ids}")
+            voice_data_list = []
+
             api_key = settings.ELEVENLABS_API_KEY
+            logger.error(api_key)
             base_url = 'https://api.elevenlabs.io/v1/voices/'
             headers = {
-                'Accept': 'application/json',
-                'xi-api-key': api_key,
-            }            
+                'Content-Type': 'application/json',
+                'xi-api-key': settings.ELEVENLABS_API_KEY,
+            }
+
             for voice_id in voice_ids:
                 url = f'{base_url}{voice_id}'
                 try:
                     response = requests.get(url, headers=headers)
-                    response.raise_for_status()  
+                    print(f"Fetching voice ID {voice_id}: {response.status_code}")
+
+                    print(response.text)
+                    logger.error(response.text)
+
+
+                    if response.status_code == 401:
+                        logger.error("Unauthorized: Invalid API key or permissions.")
+                        return JsonResponse({'error': {'message': 'Unauthorized access. Please check your API key.'}}, status=401)
+                    
+                    response.raise_for_status()  # Raises HTTPError for 4xx/5xx errors
                     voice_data = response.json()
-                    voice_data_list.append(voice_data)                
-                except requests.RequestException as e:
-                    print(f"Error fetching voice ID {voice_id}: {e}")
+                    voice_data_list.append(voice_data)
+
+                except requests.HTTPError as http_err:
+                    logger.error(f"HTTP error for voice ID {voice_id}: {http_err}")
+                    return JsonResponse({'error': {'message': f"Error fetching voice ID {voice_id}. HTTP Error: {http_err}"}}, status=response.status_code)
+                except requests.RequestException as req_err:
+                    logger.error(f"Request error for voice ID {voice_id}: {req_err}")
+                    return JsonResponse({'error': {'message': "Error fetching your voice models."}}, status=500)
+                except Exception as e:
+                    logger.error(f"Unexpected error for voice ID {voice_id}: {e}")
                     return JsonResponse({'error': {'message': "Error fetching your voice models."}}, status=500)
 
-            return JsonResponse({'data': voice_data_list}, status=200)        
+            return JsonResponse({'data': voice_data_list}, status=200)
+
         return JsonResponse({'error': {'message': 'You are not authenticated.'}}, status=401)
 
     except CustomUser.DoesNotExist:
+        logger.error(f"User with ID {pk} not found.")
         return JsonResponse({'error': {'message': 'User not found.'}}, status=404)
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        logger.error(f"Get ElevenLabs id voices error: {str(e)}")
+        logger.error(f"An unexpected error occurred: {e}")
         return JsonResponse({'error': {'message': 'An unexpected error occurred.'}}, status=500)
 
 # views.py
