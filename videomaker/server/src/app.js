@@ -54,12 +54,12 @@ app.post("/api/create-video", async (req, res) => {
   //   });
 
   //   res.json({ data: { videoPath: videoPath, videoId: videoId } });
-  // } catch (error) {
-  //   console.log(error);
-  //   return res.json({
-  //     error: { message: "Whoops something went wrong while convertiong video" },
-  //   });
-  // }
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      error: { message: "Whoops something went wrong while convertiong video" },
+    });
+  }
 });
 
 const PORT = 5054;
