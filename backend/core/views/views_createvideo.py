@@ -151,6 +151,37 @@ class CaptionGenerator:
             logger.error(f"An error occurred while generating captions: {e}")
             return None
 
+    def wordify_captions(self, data):
+        print('alignment data', data)
+        logger.error('alignment data', data)
+        words = []
+        current_word = []
+        start_time = None
+
+        for i, char in enumerate(data['characters']):
+            if char != ' ':
+                if not current_word:
+                    start_time = data['character_start_times_seconds'][i]
+                current_word.append(char)
+            else:
+                if current_word:
+                    words.append({
+                        'text': "".join(current_word),
+                        'startMs': start_time, 
+                        'endMs': data['character_end_times_seconds'][i - 1]
+                    })
+                    current_word=[]
+        if current_word:
+            words.append({
+                'text': "".join(current_word),
+                'startMs': start_time, 
+                'endMs': data['character_end_times_seconds'][-1]
+            })
+        print(words)
+        logger.error(words)
+        return words
+
+
 class VideoGenerator:
     def __init__(
         self,
@@ -187,7 +218,7 @@ class VideoGenerator:
         if not response:
             return {"error": {"message": "Something went wrong while generating captions."}}
         result = response.json()
-        self.captions = result['alignment']
+        self.captions = self.caption_generator.wordify_captions(result['alignment'])
         logger.error(self.captions)
         return self.captions
 
@@ -228,7 +259,8 @@ class VideoGenerator:
                 return JsonResponse({"error": {"message": "Serializer output is not valid JSON."}}, status=400)
 
             headers = {
-                "Content-Type": 'application/json'
+                "Content-Type": 'application/json',
+                "xi-api-key": settings.VIDEOMAKER_API_KEY,
             }
 
             try:
